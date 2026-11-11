@@ -20,3 +20,9 @@ npm-debug.log*
 Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
+
+# Vercel (IDs de projet liés, jamais committés)
+.vercel/
+
+.vercel
+.env*

@@ -21,3 +21,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+
+# Vercel (IDs de projet liés, jamais committés)
+.vercel/
+
+.vercel
+.env*
