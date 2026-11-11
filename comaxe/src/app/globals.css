@@ -1,0 +1,590 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   JETONS DE DESIGN COMAXE
+   Thème CLAIR par défaut — le thème SOMBRE est piloté par la
+   classe `dark` posée sur <html> (voir src/context/PreferencesContext).
+   Toutes les surcharges sombres sont regroupées plus bas, dans un
+   seul bloc : aucune variante `dark:` n'est utilisée ailleurs, afin
+   d'éviter tout conflit de spécificité.
+   ============================================================ */
+
+:root {
+  --background: #F8F9FD;
+  --foreground: #0F172A;
+
+  /* Police et taille de texte (préférences utilisateur) */
+  --comaxe-font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --comaxe-text-size: 16px;
+
+  /* Logo officiel : THÈME CLAIR → logo C */
+  --comaxe-logo: url('/logoC1.png');
+
+  /* Surface des cartes (bg-white) — thème clair */
+  --comaxe-surface: #FFFFFF;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--comaxe-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* La taille de base pilotée par la préférence "Taille du texte"
+   (les utilitaires Tailwind en rem s'adaptent donc automatiquement) */
+html {
+  font-size: var(--comaxe-text-size);
+}
+
+/* ------------------------------------------------------------
+   THÈME SOMBRE
+   Palette bleu-ardoise professionnelle, cohérente avec le bleu
+   primaire #1E5BF8 (les couleurs de marque ne sont jamais
+   modifiées : seules les neutres basculent).
+   ------------------------------------------------------------ */
+.dark {
+  --background: #0B1220;
+  --foreground: #E9EEF8;
+
+  --comaxe-surface: #111A2C; /* cartes (bg-white) */
+  --comaxe-fill: #151F33;    /* remplissages légers (slate-50) */
+  --comaxe-fill-2: #1A2540;  /* remplissages moyens (slate-100) */
+  --comaxe-fill-3: #212E4A;  /* remplissages marqués (slate-200) */
+
+  --comaxe-border: #25314A;
+  --comaxe-border-soft: #1E2942;
+  --comaxe-border-strong: #33415E;
+
+  --comaxe-text: #E9EEF8;
+  --comaxe-text-2: #B7C2D6;
+  --comaxe-text-3: #8A99B4;
+  --comaxe-text-4: #66748F;
+
+  /* Logo officiel : THÈME SOMBRE → logo S */
+  --comaxe-logo: url('/logoS1.png');
+}
+
+/* Logo officiel COMAXE.
+   Dessiné via une variable CSS plutôt qu'une balise <img> : la chaîne
+   rendue est identique côté serveur et côté client, donc aucune
+   divergence d'hydratation — et comme la classe `dark` est posée avant le
+   premier rendu (script inline du layout), le bon logo s'affiche sans le
+   moindre clignotement, même au changement de thème. */
+.brand-logo {
+  background-image: var(--comaxe-logo);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* ---------- Fonds ---------- */
+.dark .bg-white {
+  background-color: var(--comaxe-surface);
+}
+.dark .bg-\[\#F8F9FD\] {
+  background-color: var(--background);
+}
+.dark .bg-\[\#F8F9FD\]\/90 {
+  /* En-tête sticky de toutes les pages : translucide sur le canvas sombre */
+  background-color: rgba(11, 18, 32, 0.88);
+}
+.dark .bg-slate-50,
+.dark .bg-slate-50\/40,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/70 {
+  background-color: var(--comaxe-fill);
+}
+.dark .bg-slate-100,
+.dark .bg-slate-100\/70,
+.dark .bg-slate-100\/90 {
+  background-color: var(--comaxe-fill-2);
+}
+.dark .bg-slate-200,
+.dark .bg-slate-200\/70,
+.dark .bg-slate-200\/80 {
+  background-color: var(--comaxe-fill-3);
+}
+
+/* Surfaces de marque : cartes de contrôle dans un aplat bleu */
+.dark .focus\:bg-white:focus {
+  background-color: var(--comaxe-surface);
+}
+
+/* ---------- Textes ---------- */
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: var(--comaxe-text);
+}
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: var(--comaxe-text-2);
+}
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: var(--comaxe-text-3);
+}
+.dark .text-slate-300 {
+  color: var(--comaxe-text-4);
+}
+.dark .placeholder-slate-400::placeholder {
+  color: var(--comaxe-text-4);
+}
+.dark .placeholder\:text-slate-400::placeholder {
+  color: var(--comaxe-text-4);
+}
+
+/* ---------- Bordures & séparateurs ---------- */
+.dark .border-slate-100 {
+  border-color: var(--comaxe-border-soft);
+}
+.dark .border-slate-200,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/90,
+.dark .border-slate-300 {
+  border-color: var(--comaxe-border);
+}
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--comaxe-border-soft);
+}
+
+/* ---------- États interactifs ---------- */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-50\/60:hover,
+.dark .hover\:bg-slate-50\/70:hover {
+  background-color: var(--comaxe-fill);
+}
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-100\/70:hover {
+  background-color: var(--comaxe-fill-2);
+}
+.dark .hover\:bg-slate-200:hover {
+  background-color: var(--comaxe-fill-3);
+}
+.dark .hover\:text-slate-900:hover {
+  color: var(--comaxe-text);
+}
+.dark .hover\:text-slate-700:hover,
+.dark .hover\:text-slate-600:hover {
+  color: var(--comaxe-text-2);
+}
+.dark .group:hover .group-hover\:bg-slate-200\/80 {
+  background-color: var(--comaxe-fill-3);
+}
+.dark .hover\:border-slate-300:hover {
+  border-color: var(--comaxe-border-strong);
+}
+
+/* ============================================================
+   REFAONTE THÈME SOMBRE — PALETTE DE MARQUE
+   Les pastilles et encarts clairs du thème clair deviennent
+   des teintes profondes translucides (aucun aplat clair en
+   dark) ; les couleurs sémantiques sont éclaircies pour un
+   contraste premium sur fond sombre. Le thème clair est
+   totalement inchangé.
+   ============================================================ */
+
+/* ── Fonds teintés → teintes profondes ── */
+.dark .bg-blue-50,
+.dark .bg-blue-50\/40,
+.dark .bg-blue-50\/50,
+.dark .bg-blue-50\/60,
+.dark .bg-blue-50\/70,
+.dark .bg-blue-50\/90,
+.dark .bg-blue-100,
+.dark .bg-blue-100\/70 {
+  background-color: rgba(30, 91, 248, 0.16);
+}
+.dark .hover\:bg-blue-50:hover,
+.dark .hover\:bg-blue-50\/50:hover,
+.dark .hover\:bg-blue-100:hover {
+  background-color: rgba(30, 91, 248, 0.26);
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-50\/60,
+.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.15);
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-50\/50,
+.dark .bg-rose-100,
+.dark .bg-rose-100\/70 {
+  background-color: rgba(244, 63, 94, 0.14);
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100,
+.dark .bg-amber-100\/70 {
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.15);
+}
+
+/* ── Bordures teintées → liserés lumineux ── */
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-blue-200\/60,
+.dark .border-blue-200\/80,
+.dark .border-blue-300 {
+  border-color: rgba(96, 145, 255, 0.32);
+}
+.dark .border-emerald-100,
+.dark .border-emerald-200,
+.dark .border-emerald-200\/60,
+.dark .border-emerald-200\/70,
+.dark .border-emerald-200\/80 {
+  border-color: rgba(52, 211, 153, 0.32);
+}
+.dark .border-rose-100,
+.dark .border-rose-200,
+.dark .border-rose-200\/60,
+.dark .border-rose-200\/80 {
+  border-color: rgba(251, 113, 133, 0.3);
+}
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-amber-200\/80 {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+.dark .border-orange-200 {
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+/* ── Textes de marque éclaircis ── */
+.dark .text-\[\#1E5BF8\] {
+  color: #7EA6FF;
+}
+.dark .hover\:text-\[\#1E5BF8\]:hover {
+  color: #7EA6FF;
+}
+.dark .group:hover .group-hover\:text-\[\#1E5BF8\] {
+  color: #7EA6FF;
+}
+.dark .text-emerald-600 {
+  color: #34d399;
+}
+.dark .text-emerald-700 {
+  color: #4ade9f;
+}
+.dark .text-emerald-800 {
+  color: #6ee7b7;
+}
+.dark .text-rose-600 {
+  color: #fb7185;
+}
+.dark .text-rose-700 {
+  color: #fda4af;
+}
+.dark .text-amber-600 {
+  color: #fbbf24;
+}
+.dark .text-amber-700 {
+  color: #fcd34d;
+}
+.dark .text-orange-600 {
+  color: #fb923c;
+}
+
+/* ── Accent IA (violet) du plan Ultime : lisible en thème sombre ── */
+.dark .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.16);
+}
+.dark .border-violet-200,
+.dark .border-violet-200\/80 {
+  border-color: rgba(139, 92, 246, 0.32);
+}
+.dark .text-violet-600 {
+  color: #c4b5fd;
+}
+
+/* ── Profondeur & finitions ── */
+.dark .shadow-xs,
+.dark .shadow-2xs {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.dark ::selection {
+  background: rgba(30, 91, 248, 0.4);
+  color: #ffffff;
+}
+.dark .bg-slate-800,
+.dark .bg-slate-900 {
+  background-color: #1e293b;
+}
+.dark .bg-slate-900\/40 {
+  background-color: rgba(2, 6, 23, 0.62);
+}
+.dark .bg-slate-900\/50 {
+  background-color: rgba(2, 6, 23, 0.66);
+}
+
+/* ============================================================
+   DÉCOMPOSITION DU BÉNÉFICE — thème sombre dédié
+   Palette conçue pour le dark : teintes de marque estompées et
+   lumineuses sur surfaces profondes (jamais une inversion du clair).
+   ============================================================ */
+.dark .profit-breakdown {
+  background: linear-gradient(180deg, #121C30 0%, #0F1829 100%);
+  border-color: var(--comaxe-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Bandeau « Taux de Marge Nette » */
+.dark .profit-breakdown .pb-margin {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+.dark .profit-breakdown .pb-margin .pb-label {
+  color: #6EE7B7;
+}
+.dark .profit-breakdown .pb-margin svg {
+  color: #34D399;
+}
+
+/* Étapes : transition douce + effet de survol premium */
+.dark .profit-breakdown .pb-card {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dark .profit-breakdown .pb-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* 1. Ventes — profondeur bleue */
+.dark .profit-breakdown .pb-sales {
+  background: linear-gradient(160deg, rgba(30, 91, 248, 0.18), rgba(30, 91, 248, 0.05));
+  border-color: rgba(96, 145, 255, 0.3);
+}
+.dark .profit-breakdown .pb-sales:hover {
+  border-color: rgba(120, 163, 255, 0.5);
+}
+.dark .profit-breakdown .pb-sales .pb-label {
+  color: #9DBDFF;
+}
+.dark .profit-breakdown .pb-sales .pb-amount {
+  color: #F4F7FF;
+}
+.dark .profit-breakdown .pb-sales .pb-hint {
+  color: #8FA3C8;
+}
+
+/* 2. Coût Produits — neutre sobre */
+.dark .profit-breakdown .pb-cost {
+  background: var(--comaxe-fill);
+  border-color: var(--comaxe-border);
+}
+.dark .profit-breakdown .pb-cost:hover {
+  border-color: var(--comaxe-border-strong);
+}
+.dark .profit-breakdown .pb-cost .pb-label {
+  color: var(--comaxe-text-2);
+}
+.dark .profit-breakdown .pb-cost .pb-amount {
+  color: var(--comaxe-text);
+}
+.dark .profit-breakdown .pb-cost .pb-hint {
+  color: var(--comaxe-text-3);
+}
+
+/* 3. Bénéfice Brut — vert lumineux sur fond assombri */
+.dark .profit-breakdown .pb-gross {
+  background: linear-gradient(160deg, rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.04));
+  border-color: rgba(52, 211, 153, 0.3);
+}
+.dark .profit-breakdown .pb-gross:hover {
+  border-color: rgba(94, 234, 212, 0.48);
+}
+.dark .profit-breakdown .pb-gross .pb-label {
+  color: #6FE3BE;
+}
+.dark .profit-breakdown .pb-gross .pb-amount {
+  color: #5EE9B5;
+}
+.dark .profit-breakdown .pb-gross .pb-hint {
+  color: #8FCDB4;
+}
+.dark .profit-breakdown .pb-gross svg {
+  color: #34D399;
+}
+
+/* 4. Dépenses — rose profond, lisible sans agresser */
+.dark .profit-breakdown .pb-expenses {
+  background: linear-gradient(160deg, rgba(244, 63, 94, 0.14), rgba(244, 63, 94, 0.04));
+  border-color: rgba(251, 113, 133, 0.28);
+}
+.dark .profit-breakdown .pb-expenses:hover {
+  border-color: rgba(251, 113, 133, 0.46);
+}
+.dark .profit-breakdown .pb-expenses .pb-label {
+  color: #FDA4AF;
+}
+.dark .profit-breakdown .pb-expenses .pb-amount {
+  color: #FB7185;
+}
+.dark .profit-breakdown .pb-expenses .pb-hint {
+  color: #D79BA6;
+}
+.dark .profit-breakdown .pb-expenses svg {
+  color: #F43F5E;
+}
+
+/* 5. Bénéfice Net — aplat de marque avec halo */
+.dark .profit-breakdown .pb-net {
+  background: linear-gradient(150deg, #2C6BFF 0%, #1E5BF8 55%, #1548CF 100%);
+  border-color: rgba(120, 163, 255, 0.45);
+  box-shadow: 0 14px 34px -14px rgba(30, 91, 248, 0.6);
+}
+.dark .profit-breakdown .pb-net:hover {
+  box-shadow: 0 18px 40px -14px rgba(30, 91, 248, 0.75);
+}
+.dark .profit-breakdown .pb-net .pb-amount,
+.dark .profit-breakdown .pb-net .pb-label {
+  color: #FFFFFF;
+}
+.dark .profit-breakdown .pb-net .pb-hint {
+  color: rgba(255, 255, 255, 0.82);
+}
+.dark .profit-breakdown .pb-net svg {
+  color: #FFFFFF;
+}
+
+/* Encart « Formule automatique » du bloc Produits les plus rentables */
+.dark .profit-help {
+  background: rgba(30, 91, 248, 0.1);
+  border-color: rgba(96, 145, 255, 0.26);
+}
+.dark .profit-help svg {
+  color: #9DBDFF;
+}
+.dark .profit-help p {
+  color: #B7C2D6;
+}
+.dark .profit-help p strong {
+  color: #E9EEF8;
+}
+
+/* ============================================================
+   ÉTATS SÉLECTIONNÉS — thème sombre
+   Règle COMAXE : un état sélectionné à fond clair reçoit un
+   texte noir (et ses descendants aussi) pour un contraste
+   parfait ; les éléments non sélectionnés gardent leur
+   apparence normale.
+   ============================================================ */
+
+/* -- Pastilles segmentées (filtres, onglets, périodes) :
+   la pastille active redevient claire sur la piste pour bien
+   ressortir, et son texte passe au noir. -- */
+.dark .bg-white.shadow-xs.text-slate-900,
+.dark .bg-white.shadow-2xs.text-slate-900,
+.dark .bg-white.shadow-xs.text-emerald-700,
+.dark .bg-white.shadow-2xs.text-emerald-700,
+.dark .bg-white.shadow-xs.text-amber-700,
+.dark .bg-white.shadow-2xs.text-amber-700,
+.dark .bg-white.shadow-xs.text-rose-700,
+.dark .bg-white.shadow-2xs.text-rose-700,
+.dark .bg-white.shadow-xs.text-\[\#1E5BF8\],
+.dark .bg-white.shadow-2xs.text-\[\#1E5BF8\] {
+  background-color: #EDF1F8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.dark .bg-white.shadow-xs.text-slate-900,
+.dark .bg-white.shadow-2xs.text-slate-900 {
+  color: #0B1220;
+}
+.dark .bg-white.shadow-xs.text-\[\#1E5BF8\],
+.dark .bg-white.shadow-2xs.text-\[\#1E5BF8\] {
+  color: #1548CF;
+}
+.dark .bg-white.shadow-xs.text-emerald-700,
+.dark .bg-white.shadow-2xs.text-emerald-700 {
+  color: #047857;
+}
+.dark .bg-white.shadow-xs.text-amber-700,
+.dark .bg-white.shadow-2xs.text-amber-700 {
+  color: #b45309;
+}
+.dark .bg-white.shadow-xs.text-rose-700,
+.dark .bg-white.shadow-2xs.text-rose-700 {
+  color: #be123c;
+}
+
+/* ---------- Barre de défilement ---------- */
+.dark ::-webkit-scrollbar-thumb {
+  background: #2C3A55;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3C4C6B;
+}
+
+/* ============================================================
+   UTILITAIRES COMAXE
+   ============================================================ */
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Animation de panneau déroulant (liste Pays / Devise) */
+@keyframes comaxe-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-comaxe-dropdown {
+  animation: comaxe-dropdown-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Cartes */
+.card-clean {
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+}
+
+.dark .card-clean {
+  background: var(--comaxe-surface);
+  border-color: var(--comaxe-border);
+}
+
+.card-hover-lift {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
+}
+
+.dark .card-hover-lift:hover {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+}

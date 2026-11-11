@@ -1,0 +1,11 @@
+{
+  "name": "comaxepro-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix comaxe run dev",
+    "build": "npm --prefix comaxe run build",
+    "start": "npm --prefix comaxe run start",
+    "lint": "npm --prefix comaxe run lint"
+  }
+}

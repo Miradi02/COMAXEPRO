@@ -1,0 +1,22 @@
+# Secrets — ne JAMAIS committer
+.env
+.env.*
+!.env.example
+*.env
+
+# Dépendances
+node_modules/
+
+# Builds Next.js
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Divers
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+next-env.d.ts
