@@ -4,11 +4,11 @@
 //   • sans session → /login ; Essential → /objectifs et /analytique
 //     redirigent vers /tarifs?locked=… ; Pro/Max passent ; canceled bloqué ;
 //     les autres pages restent ouvertes.
-// Phase B (Edge headless + CDP) : historique 7 jours RÉELLEMENT appliqué
+// Phase B (Edge headless + CDP) : historique 3 jours RÉELLEMENT appliqué
 //   • dépense de 10 j masquée en Essential (« Afficher toutes les dates »)
 //   • dépense récente visible
 //   • après upgrade Pro SANS reconnexion → la dépense ancienne réapparaît
-// Phase C (Edge) : gate CLIENT — 31e produit refusé avec message centralisé,
+// Phase C (Edge) : gate CLIENT — 11e produit refusé avec message centralisé,
 //   modale conservée, produit réellement absent après rechargement.
 // Usage : node scripts/billing-access-test.mjs (serveur requis sur :3000)
 import { spawn } from 'child_process';
@@ -247,7 +247,7 @@ async function main() {
       `status=${cObj.status} → ${cObj.location}`);
 
     // ── 3. Données d'historique : dépense ancienne + récente ──
-    console.log('\n3️⃣  Phase B — historique 7 jours rendu (Edge headless)');
+    console.log('\n3️⃣  Phase B — historique 3 jours rendu (Edge headless)');
     const now = Date.now();
     const iso = (daysAgo) => new Date(now - daysAgo * 86400000).toISOString();
     const { error: seedErr } = await admin.from('expenses').insert([
@@ -311,10 +311,10 @@ async function main() {
     const objText = await waitForText(send, (t) => t.includes('Objectifs Mensuels') || t.includes('Monthly Business Goals'));
     check('Pro : page Objectifs rendue côté client (gate ouvert)', !!objText);
 
-    // ── 4. Phase C : gate CLIENT — 31e produit refusé en UI ──
+    // ── 4. Phase C : gate CLIENT — 11e produit refusé en UI ──
     console.log('\n4️⃣  Phase C — gate client (limite produits, Essential)');
     await setPlan('essential', 'active');
-    const seed = Array.from({ length: 30 }, (_, i) => ({
+    const seed = Array.from({ length: 10 }, (_, i) => ({
       user_id: userId,
       name: `PROD-GATE-XYZ-${String(i + 1).padStart(2, '0')}`,
       category: 'Smartphones',
@@ -327,7 +327,7 @@ async function main() {
       total_sales_count: 0,
     }));
     const { error: seedProdErr } = await admin.from('products').insert(seed);
-    check('Seed 30 produits (limite Essential atteinte)', !seedProdErr, seedProdErr?.message || 'ok');
+    check('Seed 10 produits (limite Essential atteinte)', !seedProdErr, seedProdErr?.message || 'ok');
 
     await goto(send, '/stock');
     const opened = await evaljs(send, `(() => {
@@ -363,7 +363,7 @@ async function main() {
     check('Soumission du formulaire produit', submitted === 'ok', submitted);
 
     const limitText = await waitForText(send, (tx) =>
-      tx.includes('limite de 30 produits') || tx.includes('30 products limit'));
+      tx.includes('limite de 10 produits') || tx.includes('10 products limit'));
     check('Gate client : message de limite centralisé AFFICHÉ', !!limitText);
     check('Modale toujours ouverte (formulaire conservé)',
       !!limitText && limitText.includes('Nouveau Produit au Catalogue'));
@@ -371,7 +371,7 @@ async function main() {
     await send('Page.reload', { ignoreCache: true });
     await waitReady(send);
     const afterText = await waitForText(send, (tx) => tx.includes('PROD-GATE-XYZ'), 20000) ?? '';
-    check('Produit refusé réellement absent du catalogue (30 toujours)',
+    check('Produit refusé réellement absent du catalogue (10 toujours)',
       afterText.includes('PROD-GATE-XYZ') && !afterText.includes('PROD-REFUSE-XYZ'));
   } finally {
     if (conn) { try { conn.close(); } catch { /* */ } }

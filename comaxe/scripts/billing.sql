@@ -133,10 +133,10 @@ $$;
 CREATE OR REPLACE FUNCTION billing_plan_limit(p_plan TEXT, p_resource TEXT)
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS $$
   SELECT CASE p_resource
-    WHEN 'sales' THEN CASE p_plan WHEN 'essential' THEN 50 WHEN 'pro' THEN 500 WHEN 'max' THEN 1000 END
-    WHEN 'products' THEN CASE p_plan WHEN 'essential' THEN 30 WHEN 'pro' THEN 300 WHEN 'max' THEN 600 END
-    WHEN 'customers' THEN CASE p_plan WHEN 'essential' THEN 30 WHEN 'pro' THEN 300 WHEN 'max' THEN 600 END
-    WHEN 'debts' THEN CASE p_plan WHEN 'essential' THEN 20 WHEN 'pro' THEN 200 WHEN 'max' THEN 400 END
+    WHEN 'sales' THEN CASE p_plan WHEN 'essential' THEN 15 WHEN 'pro' THEN 200 WHEN 'max' THEN 1000 END
+    WHEN 'products' THEN CASE p_plan WHEN 'essential' THEN 10 WHEN 'pro' THEN 70 WHEN 'max' THEN 600 END
+    WHEN 'customers' THEN CASE p_plan WHEN 'essential' THEN 15 WHEN 'pro' THEN 200 WHEN 'max' THEN 1000 END
+    WHEN 'debts' THEN CASE p_plan WHEN 'essential' THEN 5 WHEN 'pro' THEN 50 WHEN 'max' THEN 400 END
   END;
 $$;
 

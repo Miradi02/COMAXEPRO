@@ -24,12 +24,12 @@ export const PLANS_CONFIG: Record<PlanId, PlanDefinition> = {
     priceMonthly: 0,
     priceAnnual: 0,
     limits: {
-      salesPerMonth: 50,
-      products: 30,
-      customers: 30,
-      activeDebts: 20,
-      expensesHistoryDays: 7,
-      profitsHistoryDays: 7,
+      salesPerMonth: 15,
+      products: 10,
+      customers: 15,
+      activeDebts: 5,
+      expensesHistoryDays: 3,
+      profitsHistoryDays: 3,
     },
     features: {
       goals: false,
@@ -49,10 +49,10 @@ export const PLANS_CONFIG: Record<PlanId, PlanDefinition> = {
     priceMonthly: 5,
     priceAnnual: 49,
     limits: {
-      salesPerMonth: 500,
-      products: 300,
-      customers: 300,
-      activeDebts: 200,
+      salesPerMonth: 200,
+      products: 70,
+      customers: 200,
+      activeDebts: 50,
       expensesHistoryDays: null, // illimité
       profitsHistoryDays: null, // illimité
     },
@@ -76,7 +76,7 @@ export const PLANS_CONFIG: Record<PlanId, PlanDefinition> = {
     limits: {
       salesPerMonth: 1000,
       products: 600,
-      customers: 600,
+      customers: 1000,
       activeDebts: 400,
       expensesHistoryDays: null, // illimité
       profitsHistoryDays: null, // illimité

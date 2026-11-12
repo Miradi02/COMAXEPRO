@@ -18,7 +18,7 @@ const FAQ: { qFr: string; qEn: string; aFr: string; aEn: string }[] = [
     qFr: 'COMAXE est-il gratuit ?',
     qEn: 'Is COMAXE free?',
     aFr:
-      'Oui. L’offre Essential est gratuite : 50 ventes, 30 produits et 30 clients par mois pour démarrer. Les offres Pro (5 $/mois ou 49 $/an) et Max (14 $/mois ou 149 $/an) offrent davantage de capacité, Ultime (24 $/mois, bientôt disponible) ajoute l’intelligence artificielle, et les offres Business (59 $/mois et 99 $/mois, bientôt disponibles) gèrent plusieurs boutiques et équipes.',
+      'Oui. L’offre Essential est gratuite : 15 ventes, 10 produits et 15 clients par mois pour démarrer. Les offres Pro (5 $/mois ou 49 $/an) et Max (14 $/mois ou 149 $/an) offrent davantage de capacité, Ultime (24 $/mois, bientôt disponible) ajoute l’intelligence artificielle, et les offres Business (59 $/mois et 99 $/mois, bientôt disponibles) gèrent plusieurs boutiques et équipes.',
     aEn:
       'Yes. The Essential plan is free: 50 sales, 30 products and 30 customers per month to get started. Pro ($5/month or $49/year) and Max ($14/month or $149/year) offer more capacity, Ultime ($24/month, coming soon) adds artificial intelligence, and the Business plans ($59/month and $99/month, coming soon) manage multiple shops and teams.',
   },

@@ -2,7 +2,7 @@
 //   1. Structure et complétude de la config des 3 plans (Essential/Pro/Max)
 //   2. Prix cohérents avec le marketing (src/components/marketing/plans.ts)
 //   3. Limites numériques ↔ textes des cartes
-//   4. Historique (7 jours / illimité) ↔ textes
+//   4. Historique (3 jours / illimité) ↔ textes
 //   5. Fonctionnalités (Objectifs/Analytique/Publicité) ↔ textes
 //   6. Configuration Stripe (noms d'env, aucune fausse valeur)
 //   7. Extensibilité (ajout futur d'un plan sans toucher aux pages)
@@ -153,9 +153,9 @@ check("CTA marketing pro/max = subscribe", byId('pro').cta === 'subscribe' && by
 /* ══ 3. Limites numériques ↔ textes ══ */
 console.log('\n3️⃣  Limites ↔ textes marketing');
 const limitTexts = {
-  essential: ['50 ventes par mois', '30 produits', '30 clients', '20 dettes actives'],
-  pro: ['500 ventes par mois', '300 produits', '300 clients', '200 dettes actives'],
-  max: ['1 000 ventes par mois', '600 produits', '600 clients', '400 dettes actives'],
+  essential: ['15 ventes par mois', '10 produits', '15 clients', '5 dettes actives'],
+  pro: ['200 ventes par mois', '70 produits', '200 clients', '50 dettes actives'],
+  max: ['1 000 ventes par mois', '600 produits', '1 000 clients', '400 dettes actives'],
 };
 for (const id of PLAN_IDS) {
   const text = flat(byId(id));
@@ -186,12 +186,12 @@ console.log('\n4️⃣  Historique ↔ textes marketing');
 {
   const eText = flat(byId('essential'));
   const eCfg = PLANS_CONFIG.essential.limits;
-  check('essential : 7 jours dépenses (texte)',
-    eText.includes(norm('7 jours d’historique des dépenses')));
-  check('essential : 7 jours bénéfices (texte)',
-    eText.includes(norm('7 jours d’historique des bénéfices')));
-  check('essential : config 7 / 7',
-    eCfg.expensesHistoryDays === 7 && eCfg.profitsHistoryDays === 7,
+  check('essential : 3 jours dépenses (texte)',
+    eText.includes(norm('3 jours d’historique des dépenses')));
+  check('essential : 3 jours bénéfices (texte)',
+    eText.includes(norm('3 jours d’historique des bénéfices')));
+  check('essential : config 3 / 3',
+    eCfg.expensesHistoryDays === 3 && eCfg.profitsHistoryDays === 3,
     `${eCfg.expensesHistoryDays}/${eCfg.profitsHistoryDays}`);
   for (const id of ['pro', 'max']) {
     const text = flat(byId(id));
@@ -343,50 +343,50 @@ const counts = buildUsageCounts(
 check('buildUsageCounts', counts.salesCurrentMonth === 2 && counts.products === 2 && counts.customers === 1 && counts.activeDebts === 1,
   JSON.stringify(counts));
 
-const u30 = getResourceUsage('essential', 'product', { salesCurrentMonth: 0, products: 30, customers: 0, activeDebts: 0 });
-check('essential 30/30 produits → refus, reste 0, 100 %',
-  u30.canCreate === false && u30.remaining === 0 && u30.percent === 100 && u30.limit === 30 && u30.used === 30);
-const u29 = getResourceUsage('essential', 'product', { salesCurrentMonth: 0, products: 29, customers: 0, activeDebts: 0 });
-check('essential 29/30 produits → autorisé, reste 1', u29.canCreate === true && u29.remaining === 1 && u29.percent === 97);
-check('essential 50/50 ventes/mois → refus',
-  getResourceUsage('essential', 'sale', { salesCurrentMonth: 50, products: 0, customers: 0, activeDebts: 0 }).canCreate === false);
-check('essential 49/50 ventes/mois → autorisé',
-  getResourceUsage('essential', 'sale', { salesCurrentMonth: 49, products: 0, customers: 0, activeDebts: 0 }).canCreate === true);
-check('essential 20/20 dettes → refus',
-  getResourceUsage('essential', 'debt', { salesCurrentMonth: 0, products: 0, customers: 0, activeDebts: 20 }).canCreate === false);
-check('essential 30/30 clients → refus',
-  getResourceUsage('essential', 'customer', { salesCurrentMonth: 0, products: 0, customers: 30, activeDebts: 0 }).canCreate === false);
-check('pro 500/500 ventes → refus / 499 → autorisé',
-  getResourceUsage('pro', 'sale', { salesCurrentMonth: 500, products: 0, customers: 0, activeDebts: 0 }).canCreate === false &&
-  getResourceUsage('pro', 'sale', { salesCurrentMonth: 499, products: 0, customers: 0, activeDebts: 0 }).canCreate === true);
-check('pro 300/300 produits → refus / 299 → autorisé',
-  getResourceUsage('pro', 'product', { salesCurrentMonth: 0, products: 300, customers: 0, activeDebts: 0 }).canCreate === false &&
-  getResourceUsage('pro', 'product', { salesCurrentMonth: 0, products: 299, customers: 0, activeDebts: 0 }).canCreate === true);
+const u30 = getResourceUsage('essential', 'product', { salesCurrentMonth: 0, products: 10, customers: 0, activeDebts: 0 });
+check('essential 10/10 produits → refus, reste 0, 100 %',
+  u30.canCreate === false && u30.remaining === 0 && u30.percent === 100 && u30.limit === 10 && u30.used === 10);
+const u29 = getResourceUsage('essential', 'product', { salesCurrentMonth: 0, products: 9, customers: 0, activeDebts: 0 });
+check('essential 9/10 produits → autorisé, reste 1', u29.canCreate === true && u29.remaining === 1 && u29.percent === 90);
+check('essential 15/15 ventes/mois → refus',
+  getResourceUsage('essential', 'sale', { salesCurrentMonth: 15, products: 0, customers: 0, activeDebts: 0 }).canCreate === false);
+check('essential 14/15 ventes/mois → autorisé',
+  getResourceUsage('essential', 'sale', { salesCurrentMonth: 14, products: 0, customers: 0, activeDebts: 0 }).canCreate === true);
+check('essential 5/5 dettes → refus',
+  getResourceUsage('essential', 'debt', { salesCurrentMonth: 0, products: 0, customers: 0, activeDebts: 5 }).canCreate === false);
+check('essential 15/15 clients → refus',
+  getResourceUsage('essential', 'customer', { salesCurrentMonth: 0, products: 0, customers: 15, activeDebts: 0 }).canCreate === false);
+check('pro 200/200 ventes → refus / 199 → autorisé',
+  getResourceUsage('pro', 'sale', { salesCurrentMonth: 200, products: 0, customers: 0, activeDebts: 0 }).canCreate === false &&
+  getResourceUsage('pro', 'sale', { salesCurrentMonth: 199, products: 0, customers: 0, activeDebts: 0 }).canCreate === true);
+check('pro 70/70 produits → refus / 69 → autorisé',
+  getResourceUsage('pro', 'product', { salesCurrentMonth: 0, products: 70, customers: 0, activeDebts: 0 }).canCreate === false &&
+  getResourceUsage('pro', 'product', { salesCurrentMonth: 0, products: 69, customers: 0, activeDebts: 0 }).canCreate === true);
 check('max 1000/1000 ventes → refus / 999 → autorisé',
   getResourceUsage('max', 'sale', { salesCurrentMonth: 1000, products: 0, customers: 0, activeDebts: 0 }).canCreate === false &&
   getResourceUsage('max', 'sale', { salesCurrentMonth: 999, products: 0, customers: 0, activeDebts: 0 }).canCreate === true);
-check('max 600/600 produits et 600/600 clients → refus / 400/400 dettes → refus',
+check('max 600/600 produits et 1000/1000 clients → refus / 400/400 dettes → refus',
   getResourceUsage('max', 'product', { salesCurrentMonth: 0, products: 600, customers: 0, activeDebts: 0 }).canCreate === false &&
-  getResourceUsage('max', 'customer', { salesCurrentMonth: 0, products: 0, customers: 600, activeDebts: 0 }).canCreate === false &&
+  getResourceUsage('max', 'customer', { salesCurrentMonth: 0, products: 0, customers: 1000, activeDebts: 0 }).canCreate === false &&
   getResourceUsage('max', 'debt', { salesCurrentMonth: 0, products: 0, customers: 0, activeDebts: 400 }).canCreate === false);
 check('getAllUsage : 4 ressources', Object.keys(getAllUsage('pro', counts)).join(',') === 'sale,product,customer,debt');
 
-const chk = checkCanCreate('essential', 'product', { salesCurrentMonth: 0, products: 30, customers: 0, activeDebts: 0 });
+const chk = checkCanCreate('essential', 'product', { salesCurrentMonth: 0, products: 10, customers: 0, activeDebts: 0 });
 check('checkCanCreate refus : port {planId, resource, used, limit}',
-  chk.ok === false && chk.planId === 'essential' && chk.resource === 'product' && chk.used === 30 && chk.limit === 30);
+  chk.ok === false && chk.planId === 'essential' && chk.resource === 'product' && chk.used === 10 && chk.limit === 10);
 
 const cutEss = historyCutoff('essential', 'expense', NOW);
 const daysDiff = cutEss ? (NOW - cutEss) / 86400000 : -1;
-check('historyCutoff essential ≈ 7 jours', cutEss !== null && Math.round(daysDiff) === 7, `${daysDiff.toFixed(2)} j`);
+check('historyCutoff essential ≈ 3 jours', cutEss !== null && Math.round(daysDiff) === 3, `${daysDiff.toFixed(2)} j`);
 check('historyCutoff pro/max → null (illimité)',
   historyCutoff('pro', 'expense', NOW) === null &&
   historyCutoff('max', 'profit', NOW) === null);
-const sixDaysAgo = new Date(NOW.getTime() - 6 * 86400000).toISOString();
-const eightDaysAgo = new Date(NOW.getTime() - 8 * 86400000).toISOString();
+const twoDaysAgo = new Date(NOW.getTime() - 2 * 86400000).toISOString();
+const fourDaysAgo = new Date(NOW.getTime() - 4 * 86400000).toISOString();
 const threeYearsAgo = new Date(NOW.getTime() - 1000 * 86400000).toISOString();
-check('isWithinHistory essential : 6 j dedans / 8 j dehors / sans date dehors',
-  isWithinHistory('essential', 'expense', sixDaysAgo, NOW) === true &&
-  isWithinHistory('essential', 'expense', eightDaysAgo, NOW) === false &&
+check('isWithinHistory essential : 2 j dedans / 4 j dehors / sans date dehors',
+  isWithinHistory('essential', 'expense', twoDaysAgo, NOW) === true &&
+  isWithinHistory('essential', 'expense', fourDaysAgo, NOW) === false &&
   isWithinHistory('essential', 'expense', '', NOW) === false);
 check('isWithinHistory pro : 3 ans dedans (illimité)',
   isWithinHistory('pro', 'expense', threeYearsAgo, NOW) === true);
@@ -394,26 +394,26 @@ check('isWithinHistory pro : 3 ans dedans (illimité)',
 /* ══ 10. Messages dynamiques ══ */
 console.log('\n🔟  Messages dynamiques');
 {
-  const m = limitReachedMessage({ planId: 'essential', resource: 'product', used: 30, limit: 30 });
-  check('limite produits FR : 30 + produits + Essential + Pro',
-    m.fr.includes('30') && m.fr.includes('produits') && m.fr.includes('Essential') && m.fr.includes('Pro') && m.fr.startsWith('Vous avez atteint'),
+  const m = limitReachedMessage({ planId: 'essential', resource: 'product', used: 10, limit: 10 });
+  check('limite produits FR : 10 + produits + Essential + Pro',
+    m.fr.includes('10') && m.fr.includes('produits') && m.fr.includes('Essential') && m.fr.includes('Pro') && m.fr.startsWith('Vous avez atteint'),
     m.fr);
-  check('limite produits EN : 30 + products + Pro',
-    m.en.includes('30') && m.en.includes('products') && m.en.includes('Pro'), m.en);
+  check('limite produits EN : 10 + products + Pro',
+    m.en.includes('10') && m.en.includes('products') && m.en.includes('Pro'), m.en);
 
-  const mSale = limitReachedMessage({ planId: 'essential', resource: 'sale', used: 50, limit: 50 });
-  check('limite ventes FR : « 50 ventes par mois »', norm(mSale.fr).includes('50 ventes par mois'), mSale.fr);
+  const mSale = limitReachedMessage({ planId: 'essential', resource: 'sale', used: 15, limit: 15 });
+  check('limite ventes FR : « 15 ventes par mois »', norm(mSale.fr).includes('15 ventes par mois'), mSale.fr);
 
   const mMax = limitReachedMessage({ planId: 'max', resource: 'sale', used: 1000, limit: 1000 });
   check('limite max FR : « 1 000 » + sans offre supérieure',
     norm(mMax.fr).includes('1 000') && !mMax.fr.includes('Passez à'), mMax.fr);
 
-  const mDebt = limitReachedMessage({ planId: 'pro', resource: 'debt', used: 200, limit: 200 });
-  check('limite dettes FR : 200 + dettes actives + Max (suivante)',
-    mDebt.fr.includes('200') && mDebt.fr.includes('dettes actives') && mDebt.fr.includes('Max'), mDebt.fr);
+  const mDebt = limitReachedMessage({ planId: 'pro', resource: 'debt', used: 50, limit: 50 });
+  check('limite dettes FR : 50 + dettes actives + Max (suivante)',
+    mDebt.fr.includes('50') && mDebt.fr.includes('dettes actives') && mDebt.fr.includes('Max'), mDebt.fr);
 
-  const mCust = limitReachedMessage({ planId: 'essential', resource: 'customer', used: 30, limit: 30 });
-  check('limite clients FR : « 30 clients »', norm(mCust.fr).includes('30 clients'), mCust.fr);
+  const mCust = limitReachedMessage({ planId: 'essential', resource: 'customer', used: 15, limit: 15 });
+  check('limite clients FR : « 15 clients »', norm(mCust.fr).includes('15 clients'), mCust.fr);
 
   const f = featureLockedMessage('essential', 'analytics');
   check('fonctionnalité verrouillée FR : Analytique + Essential + Pro',
@@ -487,9 +487,9 @@ console.log('\n1️⃣1  SQL serveur ↔ config TS (billing.sql)');
 
   // Messages serveur (RAISE) ↔ messages.ts (FR) : rendu du template SQL
   const sqlLimitTmpl = (sqlText.match(/Vous avez atteint la limite de % % de votre offre %\. Passez à % pour continuer\./) || [])[0];
-  const lVals = ['30', 'produits', 'Essential', 'Pro'];
+  const lVals = ['10', 'produits', 'Essential', 'Pro'];
   const sqlLimitRendered = sqlLimitTmpl ? sqlLimitTmpl.replace(/%/g, () => lVals.shift()) : null;
-  const tsLimitRendered = limitReachedMessage({ planId: 'essential', resource: 'product', used: 30, limit: 30 }).fr;
+  const tsLimitRendered = limitReachedMessage({ planId: 'essential', resource: 'product', used: 10, limit: 10 }).fr;
   check('message RAISE SQL limite = limitReachedMessage TS (FR)',
     sqlLimitRendered === tsLimitRendered,
     `sql=${sqlLimitRendered ?? 'template absent'} | ts=${tsLimitRendered}`);
@@ -563,7 +563,7 @@ console.log('\n1️⃣2  Architecture (middleware, pages, historique)');
   check('BillingProvider monté au layout racine (au-dessus de CommerceProvider)',
     rootLayout.includes('<BillingProvider>') && shell.includes('<CommerceProvider>'));
 
-  // (e) Historique 7 jours réellement branché
+  // (e) Fenêtre d'historique réellement branchée
   const commerce = readFileSync(join(ROOT, 'src/context/CommerceContext.tsx'), 'utf8');
   check('historique dépenses : filtre central isWithinHistory(expense)',
     commerce.includes("isWithinHistory(planId, 'expense'"));

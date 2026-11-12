@@ -111,8 +111,8 @@ async function main() {
   // --- Limites SQL miroir de la config (extrait) ---
   const lim = await sql(`SELECT billing_plan_limit('essential','products') AS e_p, billing_plan_limit('pro','products') AS p_p, billing_plan_limit('max','sales') AS m_s, billing_plan_limit('essential','debts') AS e_d;`);
   const l = rows(lim)[0] || {};
-  check('billing_plan_limit miroir (ess/pro produits=30/300, max ventes=1000, ess dettes=20)',
-    Number(l.e_p) === 30 && Number(l.p_p) === 300 && Number(l.m_s) === 1000 && Number(l.e_d) === 20,
+  check('billing_plan_limit miroir (ess/pro produits=10/70, max ventes=1000, ess dettes=5)',
+    Number(l.e_p) === 10 && Number(l.p_p) === 70 && Number(l.m_s) === 1000 && Number(l.e_d) === 5,
     JSON.stringify(l));
 
   const feat = await sql(`SELECT billing_feature_enabled('essential','goals') AS e_g, billing_feature_enabled('pro','goals') AS p_g, billing_feature_enabled('essential','analytics') AS e_a;`);

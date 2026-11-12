@@ -44,7 +44,7 @@ export interface LimitMessageParams {
 }
 
 /**
- * « Vous avez atteint la limite de 30 produits de votre offre Essential.
+ * « Vous avez atteint la limite de 10 produits de votre offre Essential.
  *   Passez à Pro pour continue. »
  * Dynamique : plan + ressource + limite ; mention de l'offre supérieure
  * lorsqu'elle existe (aucune au-dessus de Max pour l'instant).

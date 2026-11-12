@@ -95,16 +95,16 @@ async function main() {
     console.log('\n4️⃣  ESSENTIAL — refus aux limites');
 
     const prod = await fill('products', (i) => ({ name: `Produit ${i}` }), 40);
-    check('Produits : 30 créés puis refus', prod.ok === 30 && !!prod.firstErr, `ok=${prod.ok} refus=${prod.firstErr?.message ?? '(aucun)'}`);
-    check('Message refus produit (30 produits / Essential)',
-      !!prod.firstErr && prod.firstErr.message.includes('limite de 30 produits'), prod.firstErr?.message ?? '');
+    check('Produits : 10 créés puis refus', prod.ok === 10 && !!prod.firstErr, `ok=${prod.ok} refus=${prod.firstErr?.message ?? '(aucun)'}`);
+    check('Message refus produit (10 produits / Essential)',
+      !!prod.firstErr && prod.firstErr.message.includes('limite de 10 produits'), prod.firstErr?.message ?? '');
     const { count: prodCount } = await admin.from('products').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-    check('Compteur produits = 30', prodCount === 30, `count=${prodCount}`);
+    check('Compteur produits = 10', prodCount === 10, `count=${prodCount}`);
 
     const cust = await fill('customers', (i) => ({ name: `Client ${i}` }), 40);
-    check('Clients : 30 créés puis refus', cust.ok === 30 && !!cust.firstErr, `ok=${cust.ok} refus=${cust.firstErr?.message ?? '(aucun)'}`);
-    check('Message refus client (30 clients)',
-      !!cust.firstErr && cust.firstErr.message.includes('limite de 30 clients'), cust.firstErr?.message ?? '');
+    check('Clients : 15 créés puis refus', cust.ok === 15 && !!cust.firstErr, `ok=${cust.ok} refus=${cust.firstErr?.message ?? '(aucun)'}`);
+    check('Message refus client (15 clients)',
+      !!cust.firstErr && cust.firstErr.message.includes('limite de 15 clients'), cust.firstErr?.message ?? '');
 
     // Une vente de l'AVANT-MOIS ne doit pas compter : preuve du comptage par mois civil.
     const oldSale = await tryInsert('sales', {
@@ -115,10 +115,10 @@ async function main() {
     const sale = await fill('sales', (i) => ({
       code: `BLG-${i}`, date: '2026/11/07, 10:00', client_name: 'Client test', total_amount: 10,
     }), 60);
-    check('Ventes : 50 créées ce mois-ci puis refus (l\'ancienne n\'a pas compté)', sale.ok === 50 && !!sale.firstErr,
+    check('Ventes : 15 créées ce mois-ci puis refus (l\'ancienne n\'a pas compté)', sale.ok === 15 && !!sale.firstErr,
       `ok=${sale.ok} refus=${sale.firstErr?.message ?? '(aucun)'}`);
-    check('Message refus vente (50 ventes par mois)',
-      !!sale.firstErr && sale.firstErr.message.includes('limite de 50 ventes par mois'), sale.firstErr?.message ?? '');
+    check('Message refus vente (15 ventes par mois)',
+      !!sale.firstErr && sale.firstErr.message.includes('limite de 15 ventes par mois'), sale.firstErr?.message ?? '');
 
     // Une dette DÉJÀ SOLDÉE ne doit pas compter : preuve du filtre solde > 0.
     const paidDebt = await tryInsert('debts', {
@@ -129,10 +129,10 @@ async function main() {
     const debt = await fill('debts', (i) => ({
       person_name: `Débiteur ${i}`, date: '2026/11/07', initial_amount: 20, remaining_amount: 20,
     }), 30);
-    check('Dettes : 20 actives créées puis refus (la soldée n\'a pas compté)', debt.ok === 20 && !!debt.firstErr,
+    check('Dettes : 5 actives créées puis refus (la soldée n\'a pas compté)', debt.ok === 5 && !!debt.firstErr,
       `ok=${debt.ok} refus=${debt.firstErr?.message ?? '(aucun)'}`);
-    check('Message refus dette (20 dettes actives)',
-      !!debt.firstErr && debt.firstErr.message.includes('limite de 20 dettes actives'), debt.firstErr?.message ?? '');
+    check('Message refus dette (5 dettes actives)',
+      !!debt.firstErr && debt.firstErr.message.includes('limite de 5 dettes actives'), debt.firstErr?.message ?? '');
 
     // ── 5. Verrou fonctionnel « Objectifs » ──
     console.log('\n5️⃣  ESSENTIAL — fonctionnalité Objectifs verrouillée');
@@ -153,15 +153,15 @@ async function main() {
     // ── 7. Upgrade PRO (paiement confirmé côté serveur) → tout débloqué ──
     console.log('\n7️⃣  Upgrade PRO — tout devient possible');
     await admin.from('subscriptions').update({ plan_id: 'pro', requested_plan_id: null, status: 'active' }).eq('user_id', userId);
-    const p31 = await tryInsert('products', { name: 'Produit 31 (Pro)' });
-    const c31 = await tryInsert('customers', { name: 'Client 31 (Pro)' });
-    const s51 = await tryInsert('sales', { code: 'PRO-51', date: '2026/11/07, 11:00', client_name: 'Client', total_amount: 10 });
-    const d21 = await tryInsert('debts', { person_name: 'Débiteur 21 (Pro)', date: '2026/11/07', initial_amount: 10, remaining_amount: 10 });
+    const p31 = await tryInsert('products', { name: 'Produit 11 (Pro)' });
+    const c31 = await tryInsert('customers', { name: 'Client 16 (Pro)' });
+    const s51 = await tryInsert('sales', { code: 'PRO-16', date: '2026/11/07, 11:00', client_name: 'Client', total_amount: 10 });
+    const d21 = await tryInsert('debts', { person_name: 'Débiteur 6 (Pro)', date: '2026/11/07', initial_amount: 10, remaining_amount: 10 });
     const gOk = await tryInsert('goals', { metric: 'profit', title: 'Objectif Pro', target: 1000 });
-    check('Produit 31 accepté en Pro', p31.ok, p31.error?.message);
-    check('Client 31 accepté en Pro', c31.ok, c31.error?.message);
-    check('Vente 51 acceptée en Pro', s51.ok, s51.error?.message);
-    check('Dette 21 acceptée en Pro', d21.ok, d21.error?.message);
+    check('Produit 11 accepté en Pro', p31.ok, p31.error?.message);
+    check('Client 16 accepté en Pro', c31.ok, c31.error?.message);
+    check('Vente 16 acceptée en Pro', s51.ok, s51.error?.message);
+    check('Dette 6 acceptée en Pro', d21.ok, d21.error?.message);
     check('Goal accepté en Pro', gOk.ok, gOk.error?.message);
 
     // ── 8. Statuts d'abonnement ──
@@ -172,7 +172,7 @@ async function main() {
 
     await admin.from('subscriptions').update({ status: 'canceled' }).eq('user_id', userId);
     const canc = await tryInsert('products', { name: 'Produit canceled' });
-    check('canceled → retour Essential (31e produit de nouveau refusé)', !canc.ok, canc.error?.message ?? 'inséré !');
+    check('canceled → retour Essential (produit suivant de nouveau refusé)', !canc.ok, canc.error?.message ?? 'inséré !');
     check('Message après cancellation (offre Essential)', !!canc.error && canc.error.message.includes('Essential'), canc.error?.message ?? '');
 
     const { data: subFinal } = await admin.from('subscriptions').select('plan_id, status').eq('user_id', userId).maybeSingle();

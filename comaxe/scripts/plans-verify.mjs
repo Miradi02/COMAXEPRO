@@ -96,9 +96,9 @@ check(
 /* ── 3. Limites commerciales ── */
 console.log('\n3️⃣  Limites commerciales');
 const limitTable = {
-  essential: ['50 ventes par mois', '30 produits', '30 clients', '20 dettes actives'],
-  pro: ['500 ventes par mois', '300 produits', '300 clients', '200 dettes actives'],
-  max: ['1 000 ventes par mois', '600 produits', '600 clients', '400 dettes actives'],
+  essential: ['15 ventes par mois', '10 produits', '15 clients', '5 dettes actives'],
+  pro: ['200 ventes par mois', '70 produits', '200 clients', '50 dettes actives'],
+  max: ['1 000 ventes par mois', '600 produits', '1 000 clients', '400 dettes actives'],
   ultime: ['4 000 ventes par mois', '2 400 produits', '2 400 clients', '1 600 dettes actives'],
   'business-max': ['8 000 ventes par mois', '4 800 produits', '4 800 clients', '3 200 dettes actives'],
   'business-ultime': ['80 000 ventes par mois', '48 000 produits', '48 000 clients', '32 000 dettes actives'],
@@ -108,10 +108,10 @@ for (const [id, expected] of Object.entries(limitTable)) {
   check(`limites ${id}`, missing.length === 0, missing.length ? `manquant: ${missing.join(', ')}` : '');
 }
 check(
-  'Essential — suite exacte (7 j ×2, bloqués, publicités)',
+  'Essential — suite exacte (3 j ×2, bloqués, publicités)',
   has(flat(byId('essential')), [
-    '7 jours d’historique des dépenses',
-    '7 jours d’historique des bénéfices',
+    '3 jours d’historique des dépenses',
+    '3 jours d’historique des bénéfices',
     'Objectifs bloqués',
     'Analytique bloquée',
     'Publicités activées',

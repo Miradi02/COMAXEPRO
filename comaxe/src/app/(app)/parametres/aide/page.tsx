@@ -36,7 +36,7 @@ const FAQ_KEYS = [
   {
     q: 'COMAXE est-il payant ?',
     e: 'Is COMAXE paid?',
-    a: 'Non. L’offre Essential est gratuite (0 $/mois) : 50 ventes, 30 produits et 30 clients par mois. Les offres Pro (5 $/mois ou 49 $/an) et Max (14 $/mois ou 149 $/an) offrent davantage de capacité ; les offres Ultime et Business seront disponibles prochainement.',
+    a: 'Non. L’offre Essential est gratuite (0 $/mois) : 15 ventes, 10 produits et 15 clients par mois. Les offres Pro (5 $/mois ou 49 $/an) et Max (14 $/mois ou 149 $/an) offrent davantage de capacité ; les offres Ultime et Business seront disponibles prochainement.',
     aEn: 'No. The Essential plan is free ($0/month): 50 sales, 30 products and 30 customers per month. The Pro plan ($5/month or $49/year) and Max ($14/month or $149/year) offer more capacity; the Ultime and Business plans will be available soon.',
   },
   {
