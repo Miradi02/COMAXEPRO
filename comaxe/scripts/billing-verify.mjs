@@ -822,8 +822,8 @@ console.log('\n1️⃣4  Stripe (env, config serveur, webhook, simulateur)');
   check('handler webhook : repli propre si session injoignable (catch → metadata → null)',
     whHandler.includes('} catch {') &&
     whHandler.includes('billingPeriod: billingPeriod ?? undefined'));
-  check('handler webhook : période déduite du Price dans les 3 familles (checkout/abonnement/facture)',
-    (whHandler.match(/billingPeriodFromPrice\(/g) || []).length === 3);
+  check('handler webhook : période déduite du Price dans les 3 familles (checkout/abonnement/facture, + repli via abonnement)',
+    (whHandler.match(/billingPeriodFromPrice\(/g) || []).length === 4);
 
   // (i) Simulateur : même routeur, utilisateur de session uniquement
   const sim = read('src/app/api/billing/simulator/route.ts');

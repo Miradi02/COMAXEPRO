@@ -84,13 +84,32 @@ const priceIdOf = (v: unknown): string | null => {
 };
 
 /**
+ * Fin de période d'un abonnement Stripe → ISO.
+ * La version d'API actuelle porte les dates sur l'ITEM
+ * (`items.data[0].current_period_end`) ; l'ancienne en haut d'objet :
+ * on lit les deux pour rester compatible quel que soit l'événement.
+ */
+function periodEndOf(obj: Record<string, any> | null | undefined): string | null {
+  return unixIso(obj?.current_period_end ?? obj?.items?.data?.[0]?.current_period_end ?? null);
+}
+
+/**
+ * Price ID porté par une ligne de facture : l'API actuelle le place dans
+ * `pricing.price_details.price`, l'ancienne dans `price`.
+ */
+function invoiceLinePriceId(obj: Record<string, any> | undefined): string | null {
+  const line = obj?.lines?.data?.[0];
+  return priceIdOf(line?.price) ?? priceIdOf(line?.pricing?.price_details?.price);
+}
+
+/**
  * Plan d'un objet Stripe : Price ID → plan (env), puis metadata serveur.
  * null = non résolu (applySubscriptionEvent applique alors sa règle :
  * demande en cours, sinon plan actif, sinon gratuit).
  */
 function planFromObject(obj: Record<string, any> | undefined): PlanId | null {
   const price =
-    priceIdOf(obj?.items?.data?.[0]?.price) ?? priceIdOf(obj?.lines?.data?.[0]?.price);
+    priceIdOf(obj?.items?.data?.[0]?.price) ?? invoiceLinePriceId(obj);
   const byPrice = planIdForPrice(price);
   if (byPrice) return byPrice;
   return isPlanId(obj?.metadata?.plan_id) ? obj.metadata.plan_id : null;
@@ -155,6 +174,26 @@ async function handleCheckoutSession(
         : null;
   let stripePriceId: string | null = null;
 
+  // Abonnement créé par la session : il porte la fin de période RÉELLE
+  // (≈ 30 j pour un mensuel, ≈ 1 an pour un annuel). Sans cette lecture,
+  // events.ts appliquerait son repli par défaut et un abonnement annuel
+  // s'afficherait comme se terminant dans un mois.
+  type StripeSubLite = {
+    current_period_end?: number | null;
+    items?: { data?: Array<{ price?: { id?: string } | string | null }> };
+  };
+  const subId = typeof obj?.subscription === 'string' ? obj.subscription : null;
+  let subObj: StripeSubLite | null = null;
+  if (subId) {
+    try {
+      subObj = await stripeGet<StripeSubLite>(
+        `/subscriptions/${encodeURIComponent(subId)}`
+      );
+    } catch {
+      // Repli propre : fin de période par défaut (événement suivant corrige).
+    }
+  }
+
   if (planId === null) {
     const sessionId = typeof obj?.id === 'string' ? obj.id : null;
     if (sessionId) {
@@ -166,8 +205,14 @@ async function handleCheckoutSession(
         planId = planIdForPrice(stripePriceId);
         billingPeriod = billingPeriodFromPrice(stripePriceId);
       } catch {
-        // Repli : metadata ci-dessus déjà lu, sinon null → plan selon la
-        // règle d'applySubscriptionEvent (demande en cours, sinon actif).
+        // Repli 1 : metadata ci-dessus déjà lu. Repli 2 : le Price porté
+        // par l'abonnement lui-même (session injoignable).
+        const priceFromSub = priceIdOf(subObj?.items?.data?.[0]?.price);
+        if (priceFromSub) {
+          stripePriceId = priceFromSub;
+          planId = planIdForPrice(priceFromSub);
+          billingPeriod = billingPeriodFromPrice(priceFromSub);
+        }
       }
     }
   }
@@ -179,6 +224,8 @@ async function handleCheckoutSession(
     status: 'active',
     planId,
     billingPeriod: billingPeriod ?? undefined,
+    // Fin de période réelle de l'abonnement Stripe (null → repli géré events.ts)
+    currentPeriodEnd: periodEndOf(subObj),
     stripeSubscriptionId: typeof obj?.subscription === 'string' ? obj.subscription : null,
     stripeCustomerId: typeof obj?.customer === 'string' ? obj.customer : null,
     stripePriceId,
@@ -221,11 +268,11 @@ async function handleSubscriptionChange(
     planId: status === 'active' ? planFromObject(obj) : null,
     currentPeriodEnd:
       status === 'active'
-        ? unixIso(obj?.current_period_end)
+        ? periodEndOf(obj)
         : status === 'canceled'
           ? unixIso(obj?.cancel_at) ??
             unixIso(obj?.ended_at) ??
-            unixIso(obj?.current_period_end)
+            periodEndOf(obj)
           : null,
     stripeSubscriptionId: typeof obj?.id === 'string' ? obj.id : null,
     stripeCustomerId: typeof obj?.customer === 'string' ? obj.customer : null,
@@ -257,6 +304,12 @@ async function handleInvoice(
       ? 'invoice.payment_action_required'
       : 'invoice.payment_failed';
 
+  // Fin de période : la ligne de facture porte la PÉRIODE RÉELLE
+  // (`lines[0].period.end` ≈ fin de cycle) — `invoice.period_end` de
+  // l'API actuelle vaut la date d'émission, jamais utilisée en priorité.
+  const linePeriodEnd = unixIso(obj?.lines?.data?.[0]?.period?.end);
+  const linePriceId = invoiceLinePriceId(obj);
+
   const res = await applySubscriptionEvent({
     eventId,
     userId: row.user_id,
@@ -271,12 +324,12 @@ async function handleInvoice(
             ? row.plan_id
             : null)
       : null,
-    currentPeriodEnd: paid ? unixIso(obj?.period_end) : null,
-    stripePriceId: priceIdOf(obj?.lines?.data?.[0]?.price),
+    currentPeriodEnd: paid ? linePeriodEnd ?? unixIso(obj?.period_end) : null,
+    stripePriceId: linePriceId,
     // Période : uniquement si facture payée ET Price connu (sinon on
     // conserve la période courante — renouvellement sans Price).
     billingPeriod:
-      paid ? billingPeriodFromPrice(priceIdOf(obj?.lines?.data?.[0]?.price)) ?? undefined : undefined,
+      paid ? billingPeriodFromPrice(linePriceId) ?? undefined : undefined,
     payload: { stripe: event.type },
   });
   return { applied: res.applied, duplicate: res.duplicate };

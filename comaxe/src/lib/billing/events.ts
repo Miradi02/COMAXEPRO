@@ -64,9 +64,14 @@ export interface ApplyResult {
   subscription: Subscription | null;
 }
 
-/** Mois simulé/composé : fin de période par défaut à +30 jours */
-function defaultPeriodEnd(): string {
-  return new Date(Date.now() + 30 * 86400000).toISOString();
+/**
+ * Fin de période par défaut — REPLI UNIQUEMENT (le webhook Stripe transmet
+ * la date réelle de l'abonnement lu) : cohérente avec la période facturée,
+ * un annuel ne doit jamais se terminer « dans 1 mois ».
+ */
+function defaultPeriodEnd(billingPeriod?: BillingPeriod | null): string {
+  const days = billingPeriod === 'yearly' ? 365 : 30;
+  return new Date(Date.now() + days * 86400000).toISOString();
 }
 
 /**
@@ -126,7 +131,7 @@ export async function applySubscriptionEvent(ev: SubscriptionEventData): Promise
       update.plan_id = finalPlan;
       update.requested_plan_id = null;
       update.current_period_start = nowIso;
-      update.current_period_end = ev.currentPeriodEnd ?? defaultPeriodEnd();
+      update.current_period_end = ev.currentPeriodEnd ?? defaultPeriodEnd(ev.billingPeriod);
       // Période de facturation : renseignée par l'événement (webhook la
       // déduit du Price ID, simulateur de l'intervalle choisi). Un plan
       // gratuit n'en a jamais ; sans information on conserve la période

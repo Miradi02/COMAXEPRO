@@ -180,6 +180,8 @@ export async function stripeGet<T>(path: string): Promise<T> {
 
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
     headers: { Authorization: `Bearer ${secret}` },
+    // Garde-fou anti-blocage : le webhook doit toujours répondre à Stripe.
+    signal: AbortSignal.timeout(10000),
   });
 
   const json = (await res.json().catch(() => ({}))) as {

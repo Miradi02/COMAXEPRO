@@ -5,9 +5,9 @@
  *
  * Page simplifiée (parcours de paiement Stripe en place) :
  *   • offre réellement active vs offre demandée (un clic ≠ un paiement) ;
- *   • statut, périodicité de facturation (monthly/yearly), identifiants ;
+ *   • statut, périodicité de facturation (monthly/yearly), durée ;
  *   • consommation des limites (compteurs du moteur) ;
- *   • boutons « S'abonner » / « Changer de plan » → /tarifs ;
+ *   • boutons « S'abonner » / « Changer de plan » → /tarifs (sans Essential) ;
  *   • retour de paiement Stripe (?checkout=success) pris en charge.
  *
  * Aucune règle de plan n'est écrite ici : la page affiche ce que le
@@ -249,6 +249,16 @@ export default function AbonnementPage() {
                   : t('Sans objet (offre gratuite)', 'N/A (free plan)')
             }
           />
+          <InfoRow
+            label={t('Durée', 'Duration')}
+            value={
+              yearly
+                ? t('1 an', '1 year')
+                : subscription?.billingPeriod === 'monthly'
+                  ? t('1 mois', '1 month')
+                  : t('Sans objet (offre gratuite)', 'N/A (free plan)')
+            }
+          />
           <InfoRow label={t('Début', 'Started')} value={fmtDate(subscription?.startedAt)} />
           <InfoRow
             label={t('Période actuelle', 'Current period')}
@@ -262,33 +272,13 @@ export default function AbonnementPage() {
             label={t('Fin programmée', 'Scheduled end')}
             value={subscription?.endsAt ? fmtDate(subscription.endsAt) : t('Aucune', 'None')}
           />
-          <InfoRow
-            label={t('Abonnement Stripe', 'Stripe subscription')}
-            value={
-              subscription?.stripeSubscriptionId ? (
-                <span className="font-mono text-xs">
-                  {subscription.stripeSubscriptionId}
-                </span>
-              ) : (
-                t('Non renseigné', 'Not set')
-              )
-            }
-          />
-          <InfoRow
-            label={t('Client Stripe', 'Stripe customer')}
-            value={
-              subscription?.stripeCustomerId ? (
-                <span className="font-mono text-xs">{subscription.stripeCustomerId}</span>
-              ) : (
-                t('Non renseigné', 'Not set')
-              )
-            }
-          />
+          {/* Les identifiants Stripe (abonnement/client) ne sont JAMAIS
+              affichés à l'utilisateur — informations internes. */}
         </div>
 
-        {/* ── Actions : S'abonner / Changer de plan → /tarifs ── */}
+        {/* ── Actions : S'abonner / Changer de plan → /tarifs (sans Essential) ── */}
         <div className="mt-4 flex flex-wrap gap-3">
-          <SettingsButton onClick={() => router.push('/tarifs')}>
+          <SettingsButton onClick={() => router.push('/tarifs?offres=payer')}>
             {isPayablePlan(planId)
               ? t('Changer de plan', 'Change plan')
               : t('S’abonner', 'Subscribe')}

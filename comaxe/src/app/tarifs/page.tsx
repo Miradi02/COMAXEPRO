@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Mail, X, Sparkles, Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { useI18n } from '@/context/I18nContext';
@@ -26,6 +26,19 @@ import { PricingPlans, PricingNote } from '@/components/marketing/PricingPlans';
    landing (composant PricingPlans), où les boutons mènent à la
    Connexion.
    ───────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+   Grille tarifaire selon l'arrivée :
+   • /tarifs (défaut — visiteur, après inscription ou connexion) :
+     les 4 offres, Essential compris ;
+   • /tarifs?offres=payer (boutons « S'abonner » / « Changer de plan »
+     et pub Max) : grille SANS l'offre gratuite.
+   ───────────────────────────────────────────────────────────── */
+function PricingGrid() {
+  const searchParams = useSearchParams();
+  const paidOnly = searchParams.get('offres') === 'payer';
+  return <PricingPlans ctaHref="/dashboard" paidOnly={paidOnly} />;
+}
+
 export default function TarifsPage() {
   const { t, locale } = useI18n();
   const { user } = useAuth();
@@ -249,7 +262,9 @@ export default function TarifsPage() {
         {/* ── Grille tarifaire (partagée avec la landing) ──
             Post-connexion/inscription : les boutons mènent au Dashboard ── */}
         <div className="mt-8">
-          <PricingPlans ctaHref="/dashboard" />
+          <Suspense fallback={null}>
+            <PricingGrid />
+          </Suspense>
         </div>
 
         {/* ── Note informative ── */}

@@ -4,6 +4,9 @@
  * COMAXE — /paiement : choix du moyen de paiement puis redirection
  * vers le Checkout Stripe hébergé (Payment Link de l'offre demandée).
  *
+ * Page DÉDIÉE hors groupe (app) : SANS sidebar ni en-tête — un parcours
+ * de paiement pleine largeur, seul élément = la carte centrale.
+ *
  * • `?plan=pro|max` + `?interval=month|year` (défaut month) — paramètres
  *   absents ou invalides → retour /tarifs ;
  * • Carte / Google Pay / Apple Pay → un SEUL Checkout Stripe (le lien

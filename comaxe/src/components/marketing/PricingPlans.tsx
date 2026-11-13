@@ -425,14 +425,17 @@ function CategoryBlock({
   category,
   ctaHref,
   isAnnual,
+  paidOnly = false,
 }: {
   category: PlanCategoryId;
   ctaHref: string;
   isAnnual: boolean;
+  /** Grille sans l'offre gratuite (vue « uniquement les offres payantes ») */
+  paidOnly?: boolean;
 }) {
   const { t } = useI18n();
   const meta = CATEGORIES.find((c) => c.id === category)!;
-  const plans = plansOf(category);
+  const plans = plansOf(category).filter((p) => !(paidOnly && p.id === 'essential'));
 
   return (
     <div className={category === 'entreprise' ? 'mt-14' : undefined}>
@@ -483,10 +486,17 @@ function CategoryBlock({
 export function PricingPlans({
   id,
   ctaHref = '/login',
+  paidOnly = false,
 }: {
   id?: string;
   /** Destination des boutons Essential / Pro / Max : '/login' (visiteur) ou '/dashboard' (après connexion) */
   ctaHref?: string;
+  /**
+   * Vue SANS l'offre gratuite Essential — réservée aux parcours déjà
+   * connectés (boutons « S'abonner » / « Changer de plan » et pub Max).
+   * La landing et /tarifs classique gardent Essential visible.
+   */
+  paidOnly?: boolean;
 }) {
   const { t } = useI18n();
   const [billing, setBilling] = useState<Billing>('monthly');
@@ -531,11 +541,11 @@ export function PricingPlans({
 
       {/* ── Catégorie 1 : gestion d'un commerce ── */}
       <div className="mt-12">
-        <CategoryBlock category="commerce" ctaHref={ctaHref} isAnnual={isAnnual} />
+        <CategoryBlock category="commerce" ctaHref={ctaHref} isAnnual={isAnnual} paidOnly={paidOnly} />
       </div>
 
       {/* ── Catégorie 2 : gestion d'entreprise ── */}
-      <CategoryBlock category="entreprise" ctaHref={ctaHref} isAnnual={isAnnual} />
+      <CategoryBlock category="entreprise" ctaHref={ctaHref} isAnnual={isAnnual} paidOnly={paidOnly} />
     </div>
   );
 }

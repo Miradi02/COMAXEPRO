@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { AppShellProvider } from '@/context/AppShellContext';
 import { CommerceProvider } from '@/context/CommerceContext';
+import { MaxPromoAd } from '@/components/billing/MaxPromoAd';
 
 // NOTE : BillingProvider est monté au layout RACINE (src/app/layout.tsx)
 // pour être disponible sur la landing, /tarifs et /login aussi bien que
@@ -28,6 +29,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {children}
             </main>
           </div>
+
+          {/* Mini-publicité Max — uniquement pour les comptes Essential
+              (fermeture × → réapparition après 1 min ; clic → /tarifs sans Essential) */}
+          <MaxPromoAd />
         </div>
       </CommerceProvider>
     </AppShellProvider>
