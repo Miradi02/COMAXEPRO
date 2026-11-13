@@ -7,10 +7,13 @@
  * `subscriptions`. Le webhook est la SOURCE DE VÉRITÉ de l'abonnement :
  * le frontend ne confirme jamais un statut.
  *
- * Plans : jamais de prix en dur — le plan est résolu par `planIdForPrice`
+ * Plans : jamais de prix en dur — le plan ET la période de facturation
+ * sont déduits DU PRICE PAYÉ : `planIdForPrice` + `billingPeriodFromPrice`
  * (Price IDs Stripe en variables d'environnement, test → live = changement
- * de valeurs d'env uniquement), avec repli sur le metadata posé côté
- * serveur lors de la création de la session Checkout.
+ * de valeurs d'env uniquement). Un Payment Link ne portant aucun metadata
+ * dynamique, le webhook RELIT la session Checkout
+ * (`line_items → price`) pour connaître le prix ; repli sur le metadata
+ * (ancien flux / tests signés) si la session est injoignable.
  *
  * Module serveur uniquement (aucun secret exposé au navigateur).
  */
@@ -18,8 +21,8 @@
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { applySubscriptionEvent, type BillingEventType } from './events';
 import { isPlanId } from './plans.config';
-import { planIdForPrice } from './stripe';
-import type { PlanId, SubscriptionStatus } from './types';
+import { billingPeriodFromPrice, stripeGet, planIdForPrice } from './stripe';
+import type { BillingPeriod, PlanId, SubscriptionStatus } from './types';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -137,15 +140,48 @@ async function handleCheckoutSession(
 ): Promise<WebhookHandled> {
   const userId = obj?.client_reference_id || obj?.metadata?.user_id;
   if (!userId) return { ignored: 'sans utilisateur (client_reference_id)' };
+
+  // Plan + période : d'abord le metadata serveur (ancien flux / tests
+  // signés — aucun appel réseau). Un Payment Link ne portant aucun
+  // metadata dynamique, on RELIT alors la session Checkout chez Stripe
+  // (line_items étendu → Price) pour déduire plan ET période DU PRIX
+  // PAYÉ. Échec de lecture → repli metadata, sinon null.
+  let planId: PlanId | null = isPlanId(obj?.metadata?.plan_id) ? obj.metadata.plan_id : null;
+  let billingPeriod: BillingPeriod | null =
+    obj?.metadata?.interval === 'month'
+      ? 'monthly'
+      : obj?.metadata?.interval === 'year'
+        ? 'yearly'
+        : null;
+  let stripePriceId: string | null = null;
+
+  if (planId === null) {
+    const sessionId = typeof obj?.id === 'string' ? obj.id : null;
+    if (sessionId) {
+      try {
+        const session = await stripeGet<{ line_items?: { data?: Array<{ price?: { id?: string } | string | null }> } }>(
+          `/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=line_items.data.price`
+        );
+        stripePriceId = priceIdOf(session?.line_items?.data?.[0]?.price);
+        planId = planIdForPrice(stripePriceId);
+        billingPeriod = billingPeriodFromPrice(stripePriceId);
+      } catch {
+        // Repli : metadata ci-dessus déjà lu, sinon null → plan selon la
+        // règle d'applySubscriptionEvent (demande en cours, sinon actif).
+      }
+    }
+  }
+
   const res = await applySubscriptionEvent({
     eventId,
     userId,
     type: 'checkout.completed',
     status: 'active',
-    // metadata.plan_id est posé par NOTRE route checkout (côté serveur).
-    planId: isPlanId(obj?.metadata?.plan_id) ? obj.metadata.plan_id : null,
+    planId,
+    billingPeriod: billingPeriod ?? undefined,
     stripeSubscriptionId: typeof obj?.subscription === 'string' ? obj.subscription : null,
     stripeCustomerId: typeof obj?.customer === 'string' ? obj.customer : null,
+    stripePriceId,
     payload: {
       stripe: event.type,
       checkout_session_id: typeof obj?.id === 'string' ? obj.id : null,
@@ -194,6 +230,8 @@ async function handleSubscriptionChange(
     stripeSubscriptionId: typeof obj?.id === 'string' ? obj.id : null,
     stripeCustomerId: typeof obj?.customer === 'string' ? obj.customer : null,
     stripePriceId: priceIdOf(obj?.items?.data?.[0]?.price),
+    billingPeriod:
+      billingPeriodFromPrice(priceIdOf(obj?.items?.data?.[0]?.price)) ?? undefined,
     payload: { stripe: event.type, stripe_status: stripeStatus },
   });
   return { applied: res.applied, duplicate: res.duplicate };
@@ -235,6 +273,10 @@ async function handleInvoice(
       : null,
     currentPeriodEnd: paid ? unixIso(obj?.period_end) : null,
     stripePriceId: priceIdOf(obj?.lines?.data?.[0]?.price),
+    // Période : uniquement si facture payée ET Price connu (sinon on
+    // conserve la période courante — renouvellement sans Price).
+    billingPeriod:
+      paid ? billingPeriodFromPrice(priceIdOf(obj?.lines?.data?.[0]?.price)) ?? undefined : undefined,
     payload: { stripe: event.type },
   });
   return { applied: res.applied, duplicate: res.duplicate };

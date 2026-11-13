@@ -3,19 +3,18 @@
 /**
  * COMAXE — Abonnement : état RÉEL du compte (source = moteur billing).
  *
- * Remplace l'ancienne page statique (« illimité, gratuit à vie ») :
+ * Page simplifiée (parcours de paiement Stripe en place) :
  *   • offre réellement active vs offre demandée (un clic ≠ un paiement) ;
- *   • statut, période, identifiants Stripe le cas échéant ;
+ *   • statut, périodicité de facturation (monthly/yearly), identifiants ;
  *   • consommation des limites (compteurs du moteur) ;
- *   • fonctionnalités verrouillées / déverrouillées ;
- *   • journal des événements d'abonnement ;
- *   • simulateur de cycle de vie (phase de préparation Stripe).
+ *   • boutons « S'abonner » / « Changer de plan » → /tarifs ;
+ *   • retour de paiement Stripe (?checkout=success) pris en charge.
  *
  * Aucune règle de plan n'est écrite ici : la page affiche ce que le
  * moteur (plans.config / entitlements / usage) décide.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
@@ -23,8 +22,6 @@ import {
   BarChart3,
   CalendarClock,
   CheckCircle2,
-  FlaskConical,
-  History,
   Info,
   Lock,
   Sparkles,
@@ -32,10 +29,9 @@ import {
 import { useI18n } from '@/context/I18nContext';
 import { useBilling } from '@/context/BillingContext';
 import { useCommerce } from '@/context/CommerceContext';
-import { supabase } from '@/lib/supabase/client';
-import { getPlan } from '@/lib/billing/plans.config';
+import { getPlan, isPayablePlan } from '@/lib/billing/plans.config';
+import { formatUSD } from '@/lib/utils';
 import type { FeatureKey, ResourceKey, SubscriptionStatus } from '@/lib/billing/types';
-import { SubscriptionSimulator } from '@/components/billing/SubscriptionSimulator';
 import {
   InfoRow,
   SettingsButton,
@@ -117,38 +113,13 @@ function UsageBar({
 
 /* ── Page ──────────────────────────────────────────────────────────── */
 
-interface EventRow {
-  event_type: string;
-  created_at: string;
-}
-
 export default function AbonnementPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const {
-    subscription,
-    planId,
-    requestedPlanId,
-    entitlements,
-    refresh,
-  } = useBilling();
+  const { subscription, planId, requestedPlanId, entitlements, refresh } = useBilling();
   const { usage } = useCommerce();
 
   const [checkoutOk, setCheckoutOk] = useState(false);
-  const [events, setEvents] = useState<EventRow[] | null>(null);
-
-  const reloadEvents = useCallback(async () => {
-    const { data } = await supabase
-      .from('subscription_events')
-      .select('event_type, created_at')
-      .order('created_at', { ascending: false })
-      .limit(10);
-    setEvents((data as EventRow[] | null) ?? []);
-  }, []);
-
-  useEffect(() => {
-    reloadEvents();
-  }, [reloadEvents]);
 
   // Retour de paiement Stripe (?checkout=success) : recharger l'état réel.
   useEffect(() => {
@@ -174,6 +145,15 @@ export default function AbonnementPage() {
   };
 
   const pendingRequest = requestedPlanId && requestedPlanId !== planId;
+
+  // Prix affiché selon la périodicité RÉELLEMENT en cours.
+  const yearly = subscription?.billingPeriod === 'yearly';
+  const priceLabel =
+    planDef.priceMonthly === 0
+      ? t('Gratuit', 'Free')
+      : yearly
+        ? `${formatUSD(planDef.priceAnnual)} ${t('/ an', '/ year')}`
+        : `${formatUSD(planDef.priceMonthly)} ${t('/ mois', '/ month')}`;
 
   return (
     <SettingsLayout>
@@ -222,11 +202,7 @@ export default function AbonnementPage() {
               )}
             </p>
           </div>
-          <span className="text-2xl font-extrabold text-[#1E5BF8] shrink-0">
-            {planDef.priceMonthly === 0
-              ? t('Gratuit', 'Free')
-              : `${planDef.priceMonthly} $ / mois · ${planDef.priceAnnual} $ / an`}
-          </span>
+          <span className="text-2xl font-extrabold text-[#1E5BF8] shrink-0">{priceLabel}</span>
         </div>
 
         {/* Demande en cours ≠ plan actif */}
@@ -263,6 +239,16 @@ export default function AbonnementPage() {
                 : t('Aucune', 'None')
             }
           />
+          <InfoRow
+            label={t('Périodicité', 'Billing period')}
+            value={
+              subscription?.billingPeriod === 'yearly'
+                ? t('Annuel', 'Yearly')
+                : subscription?.billingPeriod === 'monthly'
+                  ? t('Mensuel', 'Monthly')
+                  : t('Sans objet (offre gratuite)', 'N/A (free plan)')
+            }
+          />
           <InfoRow label={t('Début', 'Started')} value={fmtDate(subscription?.startedAt)} />
           <InfoRow
             label={t('Période actuelle', 'Current period')}
@@ -284,7 +270,7 @@ export default function AbonnementPage() {
                   {subscription.stripeSubscriptionId}
                 </span>
               ) : (
-                t('Non renseigné (intégration Stripe à venir)', 'Not set (Stripe integration pending)')
+                t('Non renseigné', 'Not set')
               )
             }
           />
@@ -294,25 +280,19 @@ export default function AbonnementPage() {
               subscription?.stripeCustomerId ? (
                 <span className="font-mono text-xs">{subscription.stripeCustomerId}</span>
               ) : (
-                t('Non renseigné (intégration Stripe à venir)', 'Not set (Stripe integration pending)')
+                t('Non renseigné', 'Not set')
               )
             }
           />
         </div>
 
+        {/* ── Actions : S'abonner / Changer de plan → /tarifs ── */}
         <div className="mt-4 flex flex-wrap gap-3">
           <SettingsButton onClick={() => router.push('/tarifs')}>
-            {t('Voir les offres', 'View plans')}
+            {isPayablePlan(planId)
+              ? t('Changer de plan', 'Change plan')
+              : t('S’abonner', 'Subscribe')}
             <ArrowRight className="w-4 h-4" />
-          </SettingsButton>
-          <SettingsButton
-            variant="secondary"
-            onClick={() =>
-              document.getElementById('simulateur')?.scrollIntoView({ behavior: 'smooth' })
-            }
-          >
-            <FlaskConical className="w-4 h-4" />
-            {t('Ouvrir le simulateur', 'Open the simulator')}
           </SettingsButton>
         </div>
       </SettingsSection>
@@ -418,63 +398,6 @@ export default function AbonnementPage() {
               </div>
             );
           })}
-        </div>
-      </SettingsSection>
-
-      {/* ── JOURNAL DES ÉVÉNEMENTS ── */}
-      <SettingsSection
-        icon={History}
-        title={t('Journal des événements', 'Event log')}
-        description={t(
-          'Derniers événements d’abonnement enregistrés (paiement, renouvellement, annulation…).',
-          'Latest subscription events recorded (payment, renewal, cancellation…).'
-        )}
-      >
-        {events === null ? (
-          <p className="py-4 text-sm text-slate-500">{t('Chargement…', 'Loading…')}</p>
-        ) : events.length === 0 ? (
-          <div className="py-8 flex flex-col items-center text-center gap-2">
-            <div className="p-2.5 rounded-xl bg-slate-100 text-slate-400">
-              <History className="w-5 h-5" />
-            </div>
-            <p className="text-sm font-bold text-slate-700">
-              {t('Aucun événement enregistré', 'No events recorded')}
-            </p>
-            <p className="text-xs text-slate-500 max-w-sm">
-              {t(
-                'Les événements apparaîtront après une souscription ou une simulation.',
-                'Events will appear after a subscription or a simulation.'
-              )}
-            </p>
-          </div>
-        ) : (
-          <div className="max-w-2xl">
-            {events.map((ev) => (
-              <div
-                key={ev.event_type + ev.created_at}
-                className="flex items-center justify-between gap-3 py-2.5 border-b border-slate-100 last:border-0"
-              >
-                <span className="font-mono text-xs font-semibold text-slate-700">
-                  {ev.event_type}
-                </span>
-                <span className="text-xs text-slate-500">{fmtDate(ev.created_at)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </SettingsSection>
-
-      {/* ── SIMULATEUR (préparation Stripe) ── */}
-      <SettingsSection
-        icon={FlaskConical}
-        title={t('Simulateur d’abonnement', 'Subscription simulator')}
-        description={t(
-          'Phase de préparation Stripe : rejouez les scénarios sans paiement réel.',
-          'Stripe preparation phase: replay scenarios without real payment.'
-        )}
-      >
-        <div id="simulateur">
-          <SubscriptionSimulator onApplied={reloadEvents} />
         </div>
       </SettingsSection>
 

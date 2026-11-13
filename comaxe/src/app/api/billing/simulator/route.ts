@@ -15,7 +15,7 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { applySubscriptionEvent, type BillingEventType } from '@/lib/billing/events';
 import { isPlanId } from '@/lib/billing/plans.config';
 import { priceIdForPlan, type PaidPlanId } from '@/lib/billing/stripe';
-import type { BillingInterval, PlanId, SubscriptionStatus } from '@/lib/billing/types';
+import type { BillingInterval, BillingPeriod, PlanId, SubscriptionStatus } from '@/lib/billing/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,6 +109,11 @@ export async function POST(req: NextRequest) {
 
     const status = STATUS_BY_TYPE[type];
     const isSuccess = status === 'active';
+    // Période du paiement simulé : mensuel par défaut, annuel si demandé —
+    // miroir exact de la période que le webhook déduira du Price ID.
+    // Règle identique au Price ID : renseignée sur un paiement confirmé
+    // (checkout), jamais sur un renouvellement (ne pas écraser le connu).
+    const billingPeriod: BillingPeriod = interval === 'year' ? 'yearly' : 'monthly';
 
     const result = await applySubscriptionEvent({
       eventId,
@@ -116,6 +121,10 @@ export async function POST(req: NextRequest) {
       type,
       status,
       planId: isSuccess ? planId : null,
+      billingPeriod:
+        isSuccess && type === 'checkout.completed' && planId && planId !== 'essential'
+          ? billingPeriod
+          : undefined,
       currentPeriodEnd: isSuccess ? new Date(Date.now() + 30 * 86400000).toISOString() : null,
       stripeSubscriptionId:
         type === 'checkout.completed' ? `sim_sub_${randomUUID().slice(0, 18)}` : null,

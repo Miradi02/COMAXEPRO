@@ -64,8 +64,8 @@ async function main() {
   // --- Colonnes subscriptions ---
   const cols = await sql(`SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions' ORDER BY ordinal_position;`);
   const colNames = rows(cols).map((c) => c.column_name);
-  const expected = ['user_id','plan_id','requested_plan_id','status','started_at','current_period_start','current_period_end','ends_at','stripe_customer_id','stripe_subscription_id','stripe_price_id','created_at','updated_at'];
-  check('Colonnes subscriptions (13)', colNames.length === 13 && expected.every((e) => colNames.includes(e)), colNames.join(','));
+  const expected = ['user_id','plan_id','requested_plan_id','status','billing_period','started_at','current_period_start','current_period_end','ends_at','stripe_customer_id','stripe_subscription_id','stripe_price_id','created_at','updated_at'];
+  check('Colonnes subscriptions (14)', colNames.length === 14 && expected.every((e) => colNames.includes(e)), colNames.join(','));
   const evCols = await sql(`SELECT column_name FROM information_schema.columns WHERE table_name='subscription_events' ORDER BY ordinal_position;`);
   const evNames = rows(evCols).map((c) => c.column_name);
   check('Colonnes subscription_events (id, user_id, event_id, event_type, payload, processed_at, created_at)',

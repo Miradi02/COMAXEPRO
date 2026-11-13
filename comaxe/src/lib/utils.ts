@@ -22,3 +22,11 @@ export function formatMoney(amount: number, currency?: string | null): string {
   const cur = getCurrency(currency);
   return `${formatted} ${cur ? cur.symbol : '$'}`;
 }
+
+/**
+ * Montant commercial en USD ($) — monnaie unique des tarifs COMAXE
+ * (règle design system). Ex : formatUSD(49) → « 49 $ »
+ */
+export function formatUSD(amount: number): string {
+  return formatMoney(amount, 'USD');
+}

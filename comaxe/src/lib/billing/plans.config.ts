@@ -105,3 +105,10 @@ export const getPlan = (id: PlanId): PlanDefinition => PLANS_CONFIG[id];
 /** Garde-fou : valeur inconnue → ce n'est pas un plan du moteur */
 export const isPlanId = (value: unknown): value is PlanId =>
   typeof value === 'string' && Object.prototype.hasOwnProperty.call(PLANS_CONFIG, value);
+
+/** Offres payables via Stripe (Essential = gratuit, jamais de checkout) */
+export const PAYABLE_PLAN_IDS: PlanId[] = ['pro', 'max'];
+
+/** Garde-fou checkout : la valeur est-elle une offre PAYABLE ? */
+export const isPayablePlan = (value: unknown): value is PlanId =>
+  isPlanId(value) && (PAYABLE_PLAN_IDS as string[]).includes(value);

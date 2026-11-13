@@ -49,6 +49,7 @@ const PASSWORD = 'ComaxeTest!2026';
 // on rejoue le MÊME id dans le même run.
 const EV = {
   pay: `sim_api_pay_${RUN}`,
+  payYear: `sim_api_pay_year_${RUN}`,
   fail: `sim_api_fail_${RUN}`,
   renew: `sim_api_renew_${RUN}`,
   cancel: `sim_api_cancel_${RUN}`,
@@ -64,6 +65,8 @@ const EV = {
   whAsyncFail: `evt_api_${RUN}_10`,
   whExpired: `evt_api_${RUN}_11`,
   whDeleted: `evt_api_${RUN}_12`,
+  whDeduce: `evt_api_${RUN}_13`,
+  whFake: `evt_api_${RUN}_14`,
 };
 
 const admin = createClient(URL_SB, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -192,10 +195,66 @@ async function main() {
 
     const reset = () => admin.from('subscriptions').update({
       plan_id: 'essential', status: 'active', requested_plan_id: null,
+      billing_period: null,
       current_period_end: null, ends_at: null,
       stripe_customer_id: null, stripe_subscription_id: null, stripe_price_id: null,
     }).eq('user_id', userId);
     await reset();
+
+    console.log('\n2️⃣bis  Page /paiement (Tâche 5)');
+    // Sans session : le middleware redirige (route protégée).
+    const payAnon = await fetch(`${APP}/paiement?plan=pro&interval=month`, { redirect: 'manual' });
+    check('/paiement SANS session → redirection (protégée)',
+      payAnon.status === 307 || payAnon.status === 308 || payAnon.status === 302,
+      `status=${payAnon.status}`);
+    // Avec session : page servie + libellés attendus.
+    const payAuth = await fetch(`${APP}/paiement?plan=pro&interval=month`, {
+      headers: { cookie: cookieHeader },
+    });
+    const payHtml = await payAuth.text();
+    check('/paiement avec session → 200',
+      payAuth.status === 200, `status=${payAuth.status}`);
+    check('/paiement : les 3 moyens Stripe + Mobile Money « Bientôt disponible »',
+      payHtml.includes('Google Pay') && payHtml.includes('Apple Pay') &&
+      payHtml.includes('Mobile Money') && payHtml.includes('Bientôt disponible'),
+      `len=${payHtml.length}`);
+    check('/paiement : prix de l’offre affiché en USD (5 $)',
+      payHtml.includes('5 $'), `contient_5$=${payHtml.includes('5 $')}`);
+    // Plan hors périmètre → la page renvoie aux offres (contrôle client,
+    // vérifié ici côté serveur : la route ne doit pas être une page morte).
+    const payBad = await fetch(`${APP}/paiement?plan=ultimate`, {
+      headers: { cookie: cookieHeader },
+    });
+    check('/paiement?plan=ultimate → page servie (redirection client vers /tarifs)',
+      payBad.status === 200, `status=${payBad.status}`);
+
+    console.log('\n2️⃣ter  CTA tarifs → /paiement + page Abonnement (Tâche 6)');
+    // Connecté : les boutons Pro/Max pointent DIRECTEMENT vers /paiement
+    // avec la période du sélecteur (défaut : month).
+    const tarifsAuth = await fetch(`${APP}/tarifs`, { headers: { cookie: cookieHeader } });
+    const tarifsHtml = await tarifsAuth.text();
+    const proHref = tarifsHtml.match(/href="\/paiement\?plan=pro[^"]*"/)?.[0] ?? 'ABSENT';
+    const maxHref = tarifsHtml.match(/href="\/paiement\?plan=max[^"]*"/)?.[0] ?? 'ABSENT';
+    check('/tarifs (connecté) : CTA Pro → /paiement?plan=pro&interval=month',
+      proHref.includes('plan=pro') && proHref.includes('interval=month'), proHref);
+    check('/tarifs (connecté) : CTA Max → /paiement?plan=max&interval=month',
+      maxHref.includes('plan=max') && maxHref.includes('interval=month'), maxHref);
+    check('/tarifs (connecté) : Essential reste vers /dashboard',
+      tarifsHtml.includes('href="/dashboard"'));
+    // Page Abonnement simplifiée : offre actuelle + limites + CTA → /tarifs,
+    // sans simulateur ni journal (supprimés en Tâche 6).
+    const aboAuth = await fetch(`${APP}/parametres/abonnement`, {
+      headers: { cookie: cookieHeader },
+    });
+    const aboHtml = await aboAuth.text();
+    check('/parametres/abonnement → 200',
+      aboAuth.status === 200, `status=${aboAuth.status}`);
+    check('/parametres/abonnement : CTA « S’abonner » (Essential) présent',
+      aboHtml.includes('S’abonner'), `len=${aboHtml.length}`);
+    check('/parametres/abonnement : sections offre actuelle + consommation',
+      aboHtml.includes('Offre actuelle') && aboHtml.includes('Consommation de l’offre'));
+    check('/parametres/abonnement : simulateur et journal SUPPRIMÉS',
+      !aboHtml.includes('Simulateur') && !aboHtml.includes('Journal des événements'));
 
     console.log('\n3️⃣  Demande de plan ≠ paiement');
     const req1 = await post(APP, '/api/billing/subscription', { plan: 'pro' }, cookieHeader);
@@ -218,12 +277,50 @@ async function main() {
     const stripeOn = Boolean(env.STRIPE_SECRET_KEY && env.STRIPE_PRO_PRICE_ID_MONTHLY);
     const co = await post(APP, '/api/billing/checkout', { plan: 'pro' }, cookieHeader);
     check(stripeOn
-      ? 'POST /checkout : Stripe configuré → appel réel tenté (jamais de faux 503)'
+      ? 'POST /checkout : Stripe configuré → lien réel renvoyé (jamais de faux 503)'
       : 'POST /checkout {plan:pro} sans clés → 503 + message simulateur',
     stripeOn
       ? co.status !== 503
       : co.status === 503 && (co.json?.error || '').includes('simulateur'),
       `status=${co.status} ${co.json?.error || ''}`);
+
+    // Identité du lien renvoyé : LE lien de la combinaison demandée,
+    // avec client_reference_id = user_id (pont vers le webhook).
+    if (stripeOn && co.status === 200) {
+      const stripeSrc = readFileSync(join(ROOT, 'src/lib/billing/stripe.ts'), 'utf8');
+      const plBlock = (stripeSrc.match(/const PAYMENT_LINKS[^=]*=\s*\{([\s\S]*?)\n\};/) || [])[1] || '';
+      const plUrls = [...plBlock.matchAll(/'(https:\/\/buy\.stripe\.com\/[^']+)'/g)].map((m) => m[1]);
+      const combos = [
+        { plan: 'pro', interval: 'month', label: 'pro/mensuel' },
+        { plan: 'pro', interval: 'year', label: 'pro/annuel' },
+        { plan: 'max', interval: 'month', label: 'max/mensuel' },
+        { plan: 'max', interval: 'year', label: 'max/annuel' },
+      ];
+      // Index dans la table : pro{month,year}, max{month,year} → ordre de lecture.
+      const tableOrder = [plUrls[0], plUrls[1], plUrls[2], plUrls[3]];
+      for (let i = 0; i < combos.length; i++) {
+        const c = combos[i];
+        const r = c.plan === 'pro' && c.interval === 'month'
+          ? co
+          : await post(APP, '/api/billing/checkout', { plan: c.plan, interval: c.interval }, cookieHeader);
+        const sent = r.json?.url || '';
+        const okIdentity = r.status === 200 &&
+          sent.startsWith(tableOrder[i]) &&
+          sent.includes(`client_reference_id=${userId}`) &&
+          r.json?.interval === c.interval;
+        check(`POST /checkout ${c.label} → SON lien + SON client_reference_id`, okIdentity,
+          `status=${r.status} url=${sent.slice(0, 64)}…`);
+      }
+      // La dernière requête (max/annuel) a laissé requested=max : on remet
+      // pro/mensuel pour que la suite (demande → paiement) reste cohérente.
+      const back = await post(APP, '/api/billing/checkout', { plan: 'pro', interval: 'month' }, cookieHeader);
+      check('retour à pro/mensuel pour la suite du test', back.status === 200,
+        `status=${back.status}`);
+      // Intervalle invalide refusé (route checkout)
+      const badInt = await post(APP, '/api/billing/checkout', { plan: 'pro', interval: 'decade' }, cookieHeader);
+      check('POST /checkout intervalle invalide → 400', badInt.status === 400,
+        `status=${badInt.status}`);
+    }
     const whMain = await post(APP, '/api/stripe/webhook', { id: 'evt_x', type: 'x' });
     const secretSet = Boolean(env.STRIPE_WEBHOOK_SECRET);
     check(secretSet
@@ -255,6 +352,19 @@ async function main() {
     check('Price ID journalisé = valeur env uniquement (jamais inventé)',
       (afterPay.json?.subscription?.stripePriceId ?? null) === expectedPriceId,
       `stocké=${afterPay.json?.subscription?.stripePriceId} env=${expectedPriceId}`);
+    check('billing_period = monthly (paiement mensuel confirmé)',
+      afterPay.json?.subscription?.billingPeriod === 'monthly',
+      `billingPeriod=${afterPay.json?.subscription?.billingPeriod}`);
+
+    // Paiement ANNUEL : même plan, période différente (Pro mensuel ≠ Pro annuel)
+    const payYear = await post(APP, '/api/billing/simulator',
+      { type: 'checkout.completed', eventId: EV.payYear, interval: 'year', planId: 'pro' }, cookieHeader);
+    check('checkout.completed annuel → applied', payYear.status === 200 && payYear.json?.applied === true,
+      `status=${payYear.status}`);
+    const afterYear = await get(APP, '/api/billing/subscription', cookieHeader);
+    check('billing_period = yearly après paiement annuel (même plan pro)',
+      afterYear.json?.planId === 'pro' && afterYear.json?.subscription?.billingPeriod === 'yearly',
+      `planId=${afterYear.json?.planId} billingPeriod=${afterYear.json?.subscription?.billingPeriod}`);
 
     const replay = await post(APP, '/api/billing/simulator',
       { type: 'checkout.completed', eventId: EV.pay }, cookieHeader);
@@ -295,6 +405,9 @@ async function main() {
     check('plan_id remis à zéro côté ligne (pas de fantôme annulé)',
       afterCancel.json?.subscription?.planId === 'essential',
       `ligne plan_id=${afterCancel.json?.subscription?.planId}`);
+    check('billing_period remis à NULL après annulation (plus de plan payant)',
+      afterCancel.json?.subscription?.billingPeriod === null,
+      `billingPeriod=${afterCancel.json?.subscription?.billingPeriod}`);
 
     console.log('\n6️⃣  Pas de résurrection d’un plan annulé');
     const reReq = await post(APP, '/api/billing/subscription', { plan: 'max' }, cookieHeader);
@@ -539,6 +652,80 @@ async function main() {
       afterDeleted.json?.planId === 'essential' &&
       afterDeleted.json?.subscription?.status === 'canceled',
       `applied=${whDeleted.json?.applied} planId=${afterDeleted.json?.planId} status=${afterDeleted.json?.subscription?.status}`);
+
+    console.log('\n1️⃣1️⃣  Tâche 4 : plan + période DÉDUITS du Price (sans metadata)');
+
+    // (a) VRAIE session Checkout créée via l'API Stripe (prix existants,
+    //     aucun nouveau produit/prix) → événement SANS metadata → le
+    //     webhook RELIT la session et déduit plan + période du Price.
+    await reset();
+    const priceMonthly = env.STRIPE_PRO_PRICE_ID_MONTHLY;
+    const csRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        mode: 'subscription',
+        'line_items[0][price]': priceMonthly,
+        'line_items[0][quantity]': '1',
+        success_url: `${APP}/parametres/abonnement?checkout=success`,
+        cancel_url: `${APP}/tarifs`,
+        client_reference_id: userId,
+      }),
+    });
+    const csJson = await csRes.json().catch(() => ({}));
+    check('session Checkout réelle créée pour le test (cs_…)',
+      csRes.status === 200 && typeof csJson.id === 'string' && csJson.id.startsWith('cs_'),
+      `status=${csRes.status} id=${csJson.id || csJson.error?.message || ''}`);
+
+    if (csJson.id) {
+      const evtDed = {
+        id: EV.whDeduce,
+        type: 'checkout.session.completed',
+        data: { object: {
+          id: csJson.id,
+          client_reference_id: userId,
+          subscription: 'sub_api_t4_1',
+          customer: 'cus_api_t4_1',
+          // SANS metadata : plan + période viennent DU PRICE relu.
+        } },
+      };
+      const whDed = await postWebhook(APP2, evtDed);
+      const afterDed = await get(APP, '/api/billing/subscription', cookieHeader);
+      check('webhook SANS metadata → 200 + plan DÉDUIT du Price (pro)',
+        whDed.status === 200 && whDed.json?.applied === true && afterDed.json?.planId === 'pro',
+        `status=${whDed.status} applied=${whDed.json?.applied} planId=${afterDed.json?.planId} err=${whDed.json?.error || ''}`);
+      check('billing_period = monthly DÉDUIT du Price relu dans la session',
+        afterDed.json?.subscription?.billingPeriod === 'monthly',
+        `billingPeriod=${afterDed.json?.subscription?.billingPeriod}`);
+      check('stripe_price_id = Price env stocké (jamais inventé)',
+        afterDed.json?.subscription?.stripePriceId === priceMonthly,
+        `stored=${afterDed.json?.subscription?.stripePriceId} env=${priceMonthly}`);
+    }
+
+    // (b) Session INEXISTANTE (id cs_ inventé, pas de metadata) → repli
+    //     PROPRE : 200, aucun plan inventé, période et prix inchangés.
+    const beforeFake = await get(APP, '/api/billing/subscription', cookieHeader);
+    const evtFake = {
+      id: EV.whFake,
+      type: 'checkout.session.completed',
+      data: { object: {
+        id: 'cs_test_inexistant_404',
+        client_reference_id: userId,
+        subscription: 'sub_api_t4_2',
+        customer: 'cus_api_t4_2',
+      } },
+    };
+    const whFake = await postWebhook(APP2, evtFake);
+    const afterFake = await get(APP, '/api/billing/subscription', cookieHeader);
+    check('session injoignable → repli PROPRE (200, état strictement inchangé)',
+      whFake.status === 200 && whFake.json?.applied === true &&
+      afterFake.json?.planId === beforeFake.json?.planId &&
+      afterFake.json?.subscription?.billingPeriod === beforeFake.json?.subscription?.billingPeriod &&
+      afterFake.json?.subscription?.stripePriceId === beforeFake.json?.subscription?.stripePriceId,
+      `status=${whFake.status} applied=${whFake.json?.applied} planId=${afterFake.json?.planId} err=${whFake.json?.error || ''}`);
   } catch (e) {
     console.error('\nERREUR FATALE :', e.message);
     fail++;

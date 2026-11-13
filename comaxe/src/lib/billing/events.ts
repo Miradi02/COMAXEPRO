@@ -16,7 +16,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { isPlanId } from './plans.config';
 import { mapSubscriptionRow, type SubscriptionRow } from './subscription';
-import type { PlanId, Subscription, SubscriptionStatus } from './types';
+import type { BillingPeriod, PlanId, Subscription, SubscriptionStatus } from './types';
 
 /** Types d'événements du domaine (webhook Stripe mappé + simulateur) */
 export type BillingEventType =
@@ -41,6 +41,11 @@ export interface SubscriptionEventData {
   status: SubscriptionStatus;
   /** Plan à accorder (uniquement sur événement de paiement réussi) */
   planId?: PlanId | null;
+  /**
+   * Période du paiement confirmé (monthly/yearly), dérivée côté serveur
+   * du Price ID. null/absent = sans effet sur `billing_period`.
+   */
+  billingPeriod?: BillingPeriod | null;
   /** Fin de période ISO (null = sans effet / défaut +30 j sur succès) */
   currentPeriodEnd?: string | null;
   stripeSubscriptionId?: string | null;
@@ -117,10 +122,17 @@ export async function applySubscriptionEvent(ev: SubscriptionEventData): Promise
           ? row?.plan_id
           : null;
       const granted = ev.planId && isPlanId(ev.planId) ? ev.planId : fallback;
-      update.plan_id = granted ?? 'essential';
+      const finalPlan = granted ?? 'essential';
+      update.plan_id = finalPlan;
       update.requested_plan_id = null;
       update.current_period_start = nowIso;
       update.current_period_end = ev.currentPeriodEnd ?? defaultPeriodEnd();
+      // Période de facturation : renseignée par l'événement (webhook la
+      // déduit du Price ID, simulateur de l'intervalle choisi). Un plan
+      // gratuit n'en a jamais ; sans information on conserve la période
+      // connue (renouvellement invoice.paid sans Price).
+      if (finalPlan === 'essential') update.billing_period = null;
+      else if (ev.billingPeriod !== undefined) update.billing_period = ev.billingPeriod;
       if (ev.type === 'checkout.completed') update.started_at = nowIso;
     } else if (ev.status === 'canceled' || ev.status === 'expired' || ev.status === 'unpaid') {
       // Retour à l'offre gratuite : plan_id est remis à zéro (l'historique
@@ -129,6 +141,7 @@ export async function applySubscriptionEvent(ev: SubscriptionEventData): Promise
       // revivre un plan annulé SANS paiement.
       update.plan_id = 'essential';
       update.requested_plan_id = null;
+      update.billing_period = null;
       if (ev.status === 'canceled' && ev.currentPeriodEnd) update.ends_at = ev.currentPeriodEnd;
     }
     // past_due / pending : ni plan ni demande touchés (grâce transitoire).

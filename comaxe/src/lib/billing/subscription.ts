@@ -1,4 +1,4 @@
-import type { PlanId, Subscription, SubscriptionStatus } from './types';
+import type { BillingPeriod, PlanId, Subscription, SubscriptionStatus } from './types';
 import { DEFAULT_PLAN_ID, isPlanId } from './plans.config';
 
 /**
@@ -14,6 +14,7 @@ export interface SubscriptionRow {
   plan_id?: string | null;
   requested_plan_id?: string | null;
   status?: string | null;
+  billing_period?: string | null;
   started_at?: string | null;
   current_period_start?: string | null;
   current_period_end?: string | null;
@@ -39,6 +40,11 @@ function asPlan(value: unknown): PlanId | null {
   return isPlanId(value) ? (value as PlanId) : null;
 }
 
+/** Période de facturation : 'monthly'/'yearly' seuls ; sinon null (gratuit). */
+export function asBillingPeriod(value: unknown): BillingPeriod | null {
+  return value === 'monthly' || value === 'yearly' ? value : null;
+}
+
 /**
  * Convertit une ligne de `subscriptions` en `Subscription`.
  * Retourne `null` si la ligne est absente (aucun abonnement → gratuit).
@@ -50,11 +56,15 @@ export function mapSubscriptionRow(
 ): Subscription | null {
   if (!row) return null;
   const now = new Date().toISOString();
+  const planId = asPlan(row.plan_id) ?? DEFAULT_PLAN_ID;
   return {
     userId: row.user_id ?? '',
-    planId: asPlan(row.plan_id) ?? DEFAULT_PLAN_ID,
+    planId,
     requestedPlanId: asPlan(row.requested_plan_id),
     status: asStatus(row.status),
+    // Période pertinente uniquement pour un plan payant actif : l'offre
+    // gratuite n'a pas de période de facturation.
+    billingPeriod: planId === 'essential' ? null : asBillingPeriod(row.billing_period),
     startedAt: row.started_at ?? now,
     currentPeriodStart: row.current_period_start ?? now,
     currentPeriodEnd: row.current_period_end ?? null,

@@ -481,6 +481,17 @@ console.log('\n1️⃣1  SQL serveur ↔ config TS (billing.sql)');
     sqlStatuses.join(',') === tsStatuses.join(','),
     `sql=[${sqlStatuses.join(',')}] ts=[${tsStatuses.join(',')}]`);
 
+  // Période de facturation SQL ↔ BillingPeriod (types.ts)
+  const mTsPeriod = typesSrc.match(/BillingPeriod\s*=\s*([^;]+);/);
+  const tsPeriods = mTsPeriod ? [...mTsPeriod[1].matchAll(/'(\w+)'/g)].map((x) => x[1]) : [];
+  const mSqlPeriod = sqlText.match(/billing_period IN \(([^)]+)\)/);
+  const sqlPeriods = mSqlPeriod ? [...mSqlPeriod[1].matchAll(/'(\w+)'/g)].map((x) => x[1]) : [];
+  check('périodes SQL ↔ BillingPeriod (types.ts)',
+    sqlPeriods.length > 0 && sqlPeriods.join(',') === tsPeriods.join(','),
+    `sql=[${sqlPeriods.join(',')}] ts=[${tsPeriods.join(',')}]`);
+  check('billing_period NULL autorisé (offre gratuite)',
+    /billing_period IS NULL OR billing_period IN/.test(sqlText));
+
   // Plan actif SQL (granting) ↔ resolveActivePlan
   check("billing_active_plan : granted = active,past_due,pending (miroir resolveActivePlan)",
     sqlText.includes("s.status IN ('active','past_due','pending')"));
@@ -675,6 +686,24 @@ console.log('\n1️⃣4  Stripe (env, config serveur, webhook, simulateur)');
   check("stripe.ts : sans clé secrète → pas d'appel Stripe (erreur explicite)",
     stripe.includes('Stripe non configuré'));
 
+  // (c2) Payment Links : table UNIQUE des 4 combinaisons (Tâche 2)
+  const plMatch = stripe.match(/const PAYMENT_LINKS[^=]*=\s*\{([\s\S]*?)\n\};/);
+  const plBlock = plMatch ? plMatch[1] : '';
+  const plUrls = [...plBlock.matchAll(/'(https:\/\/buy\.stripe\.com\/[^']+)'/g)].map((m) => m[1]);
+  check('stripe.ts : table PAYMENT_LINKS — 4 liens (pro/max × month/year)',
+    plUrls.length === 4, `n=${plUrls.length}`);
+  check('PAYMENT_LINKS : 4 URLs distinctes (aucun lien réutilisé)',
+    new Set(plUrls).size === 4, plUrls.join(' , '));
+  check('PAYMENT_LINKS : les 2 offres × les 2 intervalles présents',
+    /pro:\s*\{/.test(plBlock) && /max:\s*\{/.test(plBlock) &&
+    (plBlock.match(/month:/g) || []).length === 2 &&
+    (plBlock.match(/year:/g) || []).length === 2);
+  check('PAYMENT_LINKS : aucun Price ID codé en dur (priceId = env)',
+    !/price_/.test(plBlock));
+  check('stripe.ts : helper paymentLinkFor exporté (plan|interval → {url, priceId})',
+    stripe.includes('export function paymentLinkFor') &&
+    stripe.includes('PaymentLinkTarget'));
+
   // (d) Routeur d'événements partagé (events.ts) : idempotence réelle
   const events = read('src/lib/billing/events.ts');
   check("events.ts : journalisation par event_id (clé d'idempotence)",
@@ -688,9 +717,12 @@ console.log('\n1️⃣4  Stripe (env, config serveur, webhook, simulateur)');
     events.includes("onConflict: 'user_id'"));
   check('events.ts : plan_id = accord sur paiement actif + remise à zéro sur statut terminal (2 écritures max)',
     events.includes("if (ev.status === 'active')") &&
-    events.includes('update.plan_id = granted') &&
+    events.includes('update.plan_id = finalPlan') &&
     events.includes("update.plan_id = 'essential'") &&
     (events.match(/update\.plan_id/g) || []).length === 2);
+  check('events.ts : billing_period écrit (paiement actif : gratuit/sinon période) + NULL (annulation)',
+    events.includes('update.billing_period') &&
+    (events.match(/update\.billing_period/g) || []).length === 3);
   check('events.ts : demande soldée au paiement (requested_plan_id → null)',
     events.includes('update.requested_plan_id = null'));
   check('events.ts : statuts terminaux (canceled/expired/unpaid) → demande abandonnée',
@@ -715,20 +747,23 @@ console.log('\n1️⃣4  Stripe (env, config serveur, webhook, simulateur)');
   check('subscription GET : plan rendu = resolveActivePlan (plan RÉSOLU)',
     subRoute.includes('resolveActivePlan('));
 
-  // (g) Checkout : 503 si non configuré, traçabilité utilisateur
+  // (g) Checkout : 503 si non configuré, bon lien + traçabilité utilisateur
   const checkout = read('src/app/api/billing/checkout/route.ts');
   check('checkout : 503 tant que Stripe n’est pas configuré',
     checkout.includes('status: 503') && checkout.includes('isCheckoutConfigured'));
-  check('checkout : demande de plan avant session Stripe (clic ≠ paiement)',
-    checkout.indexOf('markPlanRequested(') < checkout.indexOf("'/checkout/sessions'"));
-  check('checkout : client_reference_id + metadata plan_id/user_id',
-    checkout.includes('client_reference_id') &&
-    checkout.includes("'metadata[plan_id]'") &&
-    checkout.includes("'metadata[user_id]'"));
-  check('checkout : intervalle validé (month|year, défaut month) + Price dédié',
+  check('checkout : demande de plan avant le lien de paiement (clic ≠ paiement)',
+    checkout.indexOf('markPlanRequested(') < checkout.indexOf('paymentLinkFor('));
+  check('checkout : lien dédié via paymentLinkFor (table PAYMENT_LINKS unique)',
+    checkout.includes('paymentLinkFor(plan as PaidPlanId, interval)'));
+  check('checkout : client_reference_id = user_id sur l’URL (pont webhook)',
+    checkout.includes('client_reference_id=') &&
+    checkout.includes('encodeURIComponent(user.id)'));
+  check('checkout : plus de session Checkout créée côté serveur (Payment Link hébergé)',
+    !checkout.includes('/checkout/sessions') && !checkout.includes('stripeFetch'));
+  check('checkout : intervalle validé (month|year, défaut month) + Price du lien exigé',
     checkout.includes("body.interval !== 'month' && body.interval !== 'year'") &&
     checkout.includes('isCheckoutConfigured(plan as PaidPlanId, interval)') &&
-    checkout.includes('priceIdForPlan(plan as PaidPlanId, interval)'));
+    checkout.includes('link.priceId'));
 
   // (h) Webhook : signature vérifiée AVANT lecture du corps
   const webhook = read('src/app/api/stripe/webhook/route.ts');
@@ -773,6 +808,22 @@ console.log('\n1️⃣4  Stripe (env, config serveur, webhook, simulateur)');
     !whHandler.includes('priceMonthly') && !whHandler.includes('getPlan('));
   check('handler webhook : plan accordé SEULEMENT sur statut actif',
     whHandler.includes("status === 'active' ? planFromObject(obj) : null"));
+
+  // (h3) Tâche 4 : plan ET période déduits du Price (webhook autonome)
+  check('stripe.ts : helper billingPeriodFromPrice (Price → monthly/yearly)',
+    stripe.includes('export function billingPeriodFromPrice'));
+  check('stripe.ts : helper stripeGet (GET + Bearer, clé secrète)',
+    stripe.includes('export async function stripeGet'));
+  check('handler webhook : sans metadata → session Checkout RELUE (expand line_items)',
+    whHandler.includes('stripeGet') && whHandler.includes('expand[]=line_items.data.price'));
+  check('handler webhook : metadata lu AVANT tout appel réseau (compat sans fetch)',
+    whHandler.indexOf("isPlanId(obj?.metadata?.plan_id)") !== -1 &&
+    whHandler.indexOf("isPlanId(obj?.metadata?.plan_id)") < whHandler.indexOf('await stripeGet'));
+  check('handler webhook : repli propre si session injoignable (catch → metadata → null)',
+    whHandler.includes('} catch {') &&
+    whHandler.includes('billingPeriod: billingPeriod ?? undefined'));
+  check('handler webhook : période déduite du Price dans les 3 familles (checkout/abonnement/facture)',
+    (whHandler.match(/billingPeriodFromPrice\(/g) || []).length === 3);
 
   // (i) Simulateur : même routeur, utilisateur de session uniquement
   const sim = read('src/app/api/billing/simulator/route.ts');

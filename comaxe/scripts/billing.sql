@@ -21,6 +21,9 @@
 --    plan_id          = plan RÉELLEMENT actif
 --    requested_plan_id= plan DEMANDÉ (clic « S'abonner ») — distinct du plan
 --                      actif tant que le paiement n'est pas confirmé
+--    billing_period   = période du plan payant (monthly/yearly), dérivée
+--                      du Price ID Stripe par le webhook ; NULL = offre
+--                      gratuite (Essential) ou période inconnue
 -- ============================================
 CREATE TABLE IF NOT EXISTS subscriptions (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -30,6 +33,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     CHECK (requested_plan_id IS NULL OR requested_plan_id IN ('essential','pro','max')),
   status TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active','past_due','unpaid','pending','canceled','expired')),
+  billing_period TEXT
+    CHECK (billing_period IS NULL OR billing_period IN ('monthly','yearly')),
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   current_period_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   current_period_end TIMESTAMPTZ,
@@ -40,6 +45,11 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration idempotente : colonne absente des bases créées avant
+-- l'intégration Stripe (réappliquable via scripts/apply-billing.mjs).
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS billing_period TEXT
+  CHECK (billing_period IS NULL OR billing_period IN ('monthly','yearly'));
 
 -- ============================================
 -- 2. TABLE : subscription_events (journal + idempotence webhooks/simulation)

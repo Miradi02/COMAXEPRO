@@ -80,6 +80,8 @@ async function main() {
     const { data: sub } = await admin.from('subscriptions').select('*').eq('user_id', userId).maybeSingle();
     check('Trigger d\'inscription : abonnement Essential créé', sub?.plan_id === 'essential' && sub?.status === 'active',
       `plan=${sub?.plan_id} status=${sub?.status}`);
+    check('billing_period NULL par défaut (offre gratuite sans Stripe)',
+      sub?.billing_period === null || sub?.billing_period === undefined, `billing_period=${sub?.billing_period}`);
     const { count: goalCount } = await admin.from('goals').select('*', { count: 'exact', head: true }).eq('user_id', userId);
     check('Seed handle_new_user : 4 objectifs créés (non impacté par le verrou)', goalCount === 4, `count=${goalCount}`);
 
@@ -88,8 +90,24 @@ async function main() {
     await anon.from('subscriptions').update({ plan_id: 'max' }).eq('user_id', userId);
     const { data: afterHack } = await anon.from('subscriptions').select('plan_id').eq('user_id', userId).maybeSingle();
     check('UPDATE client ignoré (plan toujours essential)', afterHack?.plan_id === 'essential', `plan=${afterHack?.plan_id}`);
+    await anon.from('subscriptions').update({ billing_period: 'yearly' }).eq('user_id', userId);
+    const { data: afterPeriodHack } = await anon.from('subscriptions').select('billing_period').eq('user_id', userId).maybeSingle();
+    check('UPDATE client billing_period ignoré (RLS, reste NULL)',
+      afterPeriodHack?.billing_period == null, `billing_period=${afterPeriodHack?.billing_period}`);
     const { error: evErr } = await anon.from('subscription_events').insert({ user_id: userId, event_id: 'forged-1', event_type: 'test' });
     check('INSERT client sur subscription_events refusé (RLS)', !!evErr, evErr?.message ?? 'aucune erreur');
+
+    // Contrainte CHECK de la colonne (valeurs autorisées uniquement)
+    const { error: badPeriod } = await admin.from('subscriptions')
+      .update({ billing_period: 'weekly' }).eq('user_id', userId);
+    check('CHECK billing_period : « weekly » REFUSÉ par la base', !!badPeriod, badPeriod?.message ?? 'accepté (KO)');
+    const { error: okPeriod } = await admin.from('subscriptions')
+      .update({ billing_period: 'monthly' }).eq('user_id', userId);
+    check('CHECK billing_period : « monthly » accepté', !okPeriod, okPeriod?.message ?? '');
+    const { error: okPeriod2 } = await admin.from('subscriptions')
+      .update({ billing_period: 'yearly' }).eq('user_id', userId);
+    check('CHECK billing_period : « yearly » accepté', !okPeriod2, okPeriod2?.message ?? '');
+    await admin.from('subscriptions').update({ billing_period: null }).eq('user_id', userId);
 
     // ── 4. ESSENTIAL : refus à la limite (produits, clients, ventes, dettes) ──
     console.log('\n4️⃣  ESSENTIAL — refus aux limites');

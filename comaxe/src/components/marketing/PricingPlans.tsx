@@ -357,9 +357,10 @@ function PlanCard({
           {t(CTA_LABELS.soon.fr, CTA_LABELS.soon.en)}
         </button>
       ) : isEnginePlan(plan.id) ? (
-        /* Offres du moteur : CTA connecté (login → demande → simulateur) */
+        /* Offres du moteur : CTA connecté (login → /paiement → Stripe) */
         <PlanCtaButton
           planId={plan.id}
+          interval={isAnnual ? 'year' : 'month'}
           label={
             plan.cta === 'free'
               ? t(CTA_LABELS.free.fr, CTA_LABELS.free.en)

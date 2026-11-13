@@ -112,8 +112,9 @@ export function requestPlan(plan: PlanId): Promise<PlanRequestResponse> {
 }
 
 /**
- * Créer la session de paiement Stripe de l'offre demandée, sur
- * l'intervalle choisi (mensuel par défaut, annuel).
+ * Obtenir l'URL du Payment Link Stripe (Checkout hébergé) de l'offre
+ * demandée, sur l'intervalle choisi (mensuel par défaut, annuel) —
+ * la route y ajoute `client_reference_id` et enregistre la demande.
  * @throws BillingApiError(503, configured:true) si Stripe n'est pas
  * configuré → l'appelant utilise le simulateur.
  */

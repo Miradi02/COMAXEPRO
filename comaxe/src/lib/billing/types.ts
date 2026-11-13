@@ -24,6 +24,14 @@ export type PlanId = 'essential' | 'pro' | 'max';
  */
 export type BillingInterval = 'month' | 'year';
 
+/**
+ * Période d'un abonnement PAYANT telle qu'enregistrée en base
+ * (`subscriptions.billing_period`), dérivée du Price ID Stripe par le
+ * webhook. `null` = offre gratuite (Essential) ou période inconnue.
+ * Valeurs en base : 'monthly' | 'yearly'.
+ */
+export type BillingPeriod = 'monthly' | 'yearly';
+
 /** Ressources comptées et limitées par plan */
 export type ResourceKey = 'sale' | 'product' | 'customer' | 'debt';
 
@@ -123,6 +131,12 @@ export interface Subscription {
   /** Plan DEMANDÉ ; null = aucune demande en cours */
   requestedPlanId: PlanId | null;
   status: SubscriptionStatus;
+  /**
+   * Période de facturation du plan actif (mensuel/annuel) — renseignée
+   * UNIQUEMENT par le serveur à partir du Price ID Stripe confirmé par le
+   * webhook. null = offre gratuite ou période non confirmée.
+   */
+  billingPeriod: BillingPeriod | null;
   /** Début du plan actuel (ISO 8601) */
   startedAt: string;
   /** Début de la période de facturation en cours (ISO 8601) */
