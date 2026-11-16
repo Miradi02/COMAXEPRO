@@ -34,6 +34,7 @@ export function RecentSalesTable({
   const {
     filteredSales,
     products,
+    customers,
     addSale,
     updateSale,
     deleteSale,
@@ -57,6 +58,13 @@ export function RecentSalesTable({
 
   const [formError, setFormError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // T7 — avertissement numéro/nom : 1ᵉʳ clic = avertissement (rien
+  // enregistré), 2ᵉ clic = enregistrement explicite.
+  const [formWarn, setFormWarn] = useState<string | null>(null);
+  const [warnAck, setWarnAck] = useState(false);
+  const digitsOf = (v: string) => v.replace(/\D/g, '');
+  const normNameOf = (v: string) => v.trim().toLowerCase().replace(/\s+/g, ' ');
 
   // Formulaire d'enregistrement
   const [newClient, setNewClient] = useState('');
@@ -115,6 +123,29 @@ export function RecentSalesTable({
       return;
     }
 
+    // T7 — avertissement anti-doublon : le numéro existe déjà sous un AUTRE
+    // nom (inconnu du fichier clients) → la page n'enregistre PAS encore :
+    // 1ᵉʳ clic = avertissement, 2ᵉ clic = enregistrement quand même
+    // (la vente sera rattachée à la fiche du numéro).
+    if (!warnAck) {
+      const phoneKey = digitsOf(newPhone);
+      const nameKnown = customers.some((c) => normNameOf(c.name) === normNameOf(newClient));
+      if (phoneKey.length >= 6 && !nameKnown) {
+        const owner = customers.find((c) => digitsOf(c.phone) === phoneKey);
+        if (owner) {
+          setWarnAck(true);
+          setFormWarn(
+            t(
+              "Ce numéro de téléphone appartient déjà à la fiche « {name} ». Vérifiez le nom du client, puis recliquez sur « Valider et Déduire du Stock » pour enregistrer quand même.",
+              'This phone number already belongs to the customer record "{name}". Check the customer name, then click "Confirm & Deduct from Stock" again to save anyway.',
+              { name: owner.name }
+            )
+          );
+          return;
+        }
+      }
+    }
+
     const prodName = chosenProduct.name;
     const saleDate =
       selectedDate && selectedDate !== 'today'
@@ -151,6 +182,8 @@ export function RecentSalesTable({
     setNewPhone('');
     setNewQuantity(1);
     setFormError(null);
+    setFormWarn(null);
+    setWarnAck(false);
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -241,9 +274,13 @@ export function RecentSalesTable({
           {/* Bouton Nouvel Enregistrement (masqué sur le Dashboard) */}
           {showAddButton && (
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setFormWarn(null);
+                setWarnAck(false);
+                setIsModalOpen(true);
+              }}
               data-add-sale-btn
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>{t('Enregistrer une Vente', 'Record a Sale')}</span>
@@ -457,6 +494,16 @@ export function RecentSalesTable({
               </div>
             )}
 
+            {formWarn && (
+              <div
+                data-form-warn
+                className="mb-4 p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>{formWarn}</span>
+              </div>
+            )}
+
             <form onSubmit={handleCreateSale} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -469,6 +516,8 @@ export function RecentSalesTable({
                   value={newClient}
                   onChange={(e) => {
                     setFormError(null);
+                    setFormWarn(null);
+                    setWarnAck(false);
                     setNewClient(e.target.value);
                   }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5BF8]/20 focus:border-[#1E5BF8]"
@@ -483,7 +532,11 @@ export function RecentSalesTable({
                   type="text"
                   placeholder="ex: +243 81 234 5678"
                   value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
+                  onChange={(e) => {
+                    setFormWarn(null);
+                    setWarnAck(false);
+                    setNewPhone(e.target.value);
+                  }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E5BF8]/20 focus:border-[#1E5BF8]"
                 />
               </div>

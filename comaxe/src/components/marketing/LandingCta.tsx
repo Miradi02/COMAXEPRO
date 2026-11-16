@@ -39,7 +39,7 @@ export function LandingCta() {
 
           <div className="relative mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="#tarifs"
+              href="/login"
               className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#1548CF] text-sm font-bold shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all"
             >
               {t('Commencer gratuitement', 'Start for free')}

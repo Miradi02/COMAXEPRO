@@ -6,9 +6,11 @@ import {
   Layers,
   ArrowUpRight,
   TrendingDown,
+  TrendingUp,
   Award,
   Flame,
   PieChart,
+  Lightbulb,
   Loader2,
 } from 'lucide-react';
 import { SalesEvolutionChart } from '@/components/dashboard/SalesEvolutionChart';
@@ -20,7 +22,7 @@ import { FeatureLocked } from '@/components/billing/FeatureLocked';
 import { isFeatureUnlocked } from '@/lib/billing/entitlements';
 import { isWithinPeriodRange } from '@/lib/dateUtils';
 
-type PeriodOption = '7j' | '30j' | '3m' | '6m' | '12m' | 'personnalise';
+type PeriodOption = 'jour' | '7j' | '30j' | '3m' | '6m' | '12m' | 'personnalise';
 
 export default function AnalytiquePage() {
   const [periodFilter, setPeriodFilter] = useState<PeriodOption>('30j');
@@ -97,6 +99,61 @@ export default function AnalytiquePage() {
       .slice(0, 3);
   }, [periodSales, products, t]);
 
+  // --- « À retenir » : 2 à 4 observations tirées des données réelles de la période ---
+  const insights = useMemo(() => {
+    const out: { icon: React.ReactNode; text: string; tone: string }[] = [];
+    const salesTotal = periodData.totalSalesUSD;
+
+    // 1. Marge nette
+    if (salesTotal > 0) {
+      const m = periodData.netMarginPercentage;
+      out.push({
+        icon: <TrendingUp className="w-3.5 h-3.5" />,
+        text:
+          m >= 25
+            ? t('Bonne rentabilité : {m}% de marge nette sur {a}.', 'Good profitability: {m}% net margin on {a}.', { m, a: formatAmount(periodData.netProfitUSD) })
+            : m >= 10
+              ? t('Marge nette correcte à {m}% — surveillez vos dépenses.', 'Correct net margin at {m}% — watch your expenses.', { m })
+              : t('Marge nette faible ({m}%) : agissez sur les coûts.', 'Low net margin ({m}%): act on costs.', { m }),
+        tone: m >= 25 ? 'text-emerald-600 bg-emerald-50 border-emerald-200/60' : m >= 10 ? 'text-[#1E5BF8] bg-blue-50 border-blue-200/60' : 'text-rose-600 bg-rose-50 border-rose-200/60',
+      });
+    }
+
+    // 2. Catégorie dominante
+    if (categoryBreakdown.length > 0) {
+      const top = categoryBreakdown[0];
+      const share = salesTotal > 0 ? Math.round((top.revenue / salesTotal) * 100) : 0;
+      out.push({
+        icon: <Flame className="w-3.5 h-3.5" />,
+        text: t('{c} domine vos ventes : {a} ({p}% du chiffre d’affaires).', '{c} leads your sales: {a} ({p}% of revenue).', { c: top.category, a: formatAmount(top.revenue), p: share }),
+        tone: 'text-[#1E5BF8] bg-blue-50 border-blue-200/60',
+      });
+    }
+
+    // 3. Mode d'encaissement dominant
+    const topPm = [...paymentBreakdown].sort((a, b) => b.amount - a.amount)[0];
+    if (topPm && topPm.amount > 0) {
+      out.push({
+        icon: <PieChart className="w-3.5 h-3.5" />,
+        text: t('Encaissements majoritairement en {l} : {p}% du volume.', 'Collections mostly in {l}: {p}% of volume.', { l: topPm.label, p: topPm.pct }),
+        tone: 'text-[#1E5BF8] bg-blue-50 border-blue-200/60',
+      });
+    }
+
+    // 4. Rotation du stock
+    const rot = parseFloat(stockRotationRate);
+    out.push({
+      icon: <Layers className="w-3.5 h-3.5" />,
+      text:
+        rot >= 2
+          ? t('Stock bien animé : rotation {r} sur la période.', 'Stock well active: {r} rotation over the period.', { r: stockRotationRate })
+          : t('Stock peu animé ({r}) : relancez les ventes des produits en réserve.', 'Slow stock ({r}): push sales of stored products.', { r: stockRotationRate }),
+      tone: rot >= 2 ? 'text-emerald-600 bg-emerald-50 border-emerald-200/60' : 'text-amber-700 bg-amber-50 border-amber-200/60',
+    });
+
+    return out.slice(0, 4);
+  }, [periodData, categoryBreakdown, paymentBreakdown, stockRotationRate, t, formatAmount]);
+
   // --- Verrous fonctionnels (repli si le middleware a laissé passer) ---
   if (billingLoading) {
     return (
@@ -129,6 +186,7 @@ export default function AnalytiquePage() {
 
         <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 flex-wrap gap-1">
           {([
+            { key: 'jour', label: t("Aujourd'hui", 'Today') },
             { key: '7j', label: t('7 jours', '7 days') },
             { key: '30j', label: t('30 jours', '30 days') },
             { key: '3m', label: t('3 mois', '3 months') },
@@ -157,7 +215,7 @@ export default function AnalytiquePage() {
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
             {t('Ventes Totales', 'Total Sales')}
           </span>
-          <p className="text-3xl font-extrabold text-slate-900">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             {formatAmount(periodData.totalSalesUSD)}
           </p>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-2">
@@ -170,7 +228,7 @@ export default function AnalytiquePage() {
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
             {t('Bénéfice Net', 'Net Profit')}
           </span>
-          <p className="text-3xl font-extrabold text-slate-900">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             {formatAmount(periodData.netProfitUSD)}
           </p>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-2">
@@ -183,7 +241,7 @@ export default function AnalytiquePage() {
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
             {t('Dépenses Décaissées', 'Expenses Paid')}
           </span>
-          <p className="text-3xl font-extrabold text-slate-900">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             {formatAmount(periodData.expensesUSD)}
           </p>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 mt-2">
@@ -196,7 +254,7 @@ export default function AnalytiquePage() {
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
             {t('Rotation du Stock', 'Stock Rotation')}
           </span>
-          <p className="text-3xl font-extrabold text-slate-900">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             {stockRotationRate}
           </p>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 mt-2">
@@ -228,16 +286,52 @@ export default function AnalytiquePage() {
               {t("Répartition des Modes d'Encaissement", 'Breakdown of Collection Methods')}
             </h3>
           </div>
-          <div className="space-y-3 text-xs">
-            {paymentBreakdown.map((pm) => (
-              <div key={pm.label} className="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
-                <span className="font-bold text-slate-800">{pm.label}</span>
-                <div className="text-right">
-                  <span className="font-extrabold text-slate-900 block">{formatAmount(pm.amount)}</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">{t('{p}% du volume', '{p}% of volume', { p: pm.pct })}</span>
-                </div>
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            {/* Anneau de répartition */}
+            <div className="relative shrink-0" aria-hidden>
+              <svg width="112" height="112" viewBox="0 0 42 42" className="-rotate-90">
+                <circle cx="21" cy="21" r="15.9155" fill="none" strokeWidth="6" className="stroke-slate-100" />
+                {(() => {
+                  const colors = ['#1E5BF8', '#10B981', '#F59E0B'];
+                  let offset = 25;
+                  return paymentBreakdown.map((pm, i) => {
+                    const seg = pm.pct > 0 ? pm.pct : 0;
+                    const el = (
+                      <circle
+                        key={pm.label}
+                        cx="21" cy="21" r="15.9155" fill="none"
+                        strokeWidth="6"
+                        stroke={colors[i % colors.length]}
+                        strokeDasharray={`${seg} ${100 - seg}`}
+                        strokeDashoffset={offset}
+                        strokeLinecap={seg >= 100 ? 'butt' : 'round'}
+                      />
+                    );
+                    offset -= seg;
+                    return el;
+                  });
+                })()}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-sm font-extrabold text-slate-900">{formatAmount(periodData.totalSalesUSD)}</span>
+                <span className="text-[10px] text-slate-400 font-semibold">{t('total', 'total')}</span>
               </div>
-            ))}
+            </div>
+
+            <div className="flex-1 w-full space-y-3 text-xs">
+              {paymentBreakdown.map((pm, i) => (
+                <div key={pm.label} className="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-bold text-slate-800">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ['#1E5BF8', '#10B981', '#F59E0B'][i % 3] }} />
+                    {pm.label}
+                  </span>
+                  <div className="text-right">
+                    <span className="font-extrabold text-slate-900 block">{formatAmount(pm.amount)}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">{t('{p}% du volume', '{p}% of volume', { p: pm.pct })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -270,6 +364,29 @@ export default function AnalytiquePage() {
               </p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ===== « À RETENIR » : 2 à 4 observations réelles ===== */}
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 rounded-lg bg-blue-50 text-[#1E5BF8]">
+            <Lightbulb className="w-4 h-4" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900">
+            {t('À retenir', 'Key takeaways')}
+          </h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-auto">
+            {t('Période : {p}', 'Period: {p}', { p: periodData.periodLabel })}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {insights.map((ins, i) => (
+            <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border ${ins.tone}`}>
+              <span className="shrink-0 mt-0.5">{ins.icon}</span>
+              <p className="text-xs font-semibold leading-relaxed">{ins.text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

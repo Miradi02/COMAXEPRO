@@ -243,7 +243,7 @@ export function getCurrentMonthLabel(locale: Locale = 'fr'): string {
  */
 export function isWithinPeriodRange(
   itemDate: string,
-  period: '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise',
+  period: 'jour' | '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise',
   referenceDate: Date = new Date()
 ): boolean {
   const opDate = parseToDate(itemDate);
@@ -254,6 +254,14 @@ export function isWithinPeriodRange(
   if (diffDays < -1) return false;
 
   switch (period) {
+    case 'jour':
+      // Même journée que la date de référence
+      return (
+        opDate.getFullYear() === referenceDate.getFullYear() &&
+        opDate.getMonth() === referenceDate.getMonth() &&
+        opDate.getDate() === referenceDate.getDate()
+      );
+
     case '7j':
     case 'semaine':
       return diffDays <= 7 && diffDays >= -0.5;

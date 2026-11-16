@@ -28,7 +28,7 @@ export default function VentesPage() {
               {t('Ventes Enregistrées (Total)', 'Recorded Sales (Total)')}
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             {formatAmount(totalAllSales)}
           </p>
           <p className="text-xs text-emerald-600 font-semibold mt-1">
@@ -45,7 +45,7 @@ export default function VentesPage() {
               {t('Panier Moyen', 'Average Basket')}
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             {formatAmount(avgBasket)}
           </p>
           <p className="text-xs text-slate-400 font-medium mt-1">
@@ -62,7 +62,7 @@ export default function VentesPage() {
               {t('Ventes ({d})', 'Sales ({d})', { d: displayDateText })}
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             {formatAmount(activeDateTotal)}
           </p>
           <p className="text-xs text-slate-400 font-medium mt-1">

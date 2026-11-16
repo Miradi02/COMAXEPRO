@@ -469,7 +469,10 @@ function CategoryBlock({
       <div
         className={
           category === 'commerce'
-            ? 'mt-7 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-6'
+            ? paidOnly
+              // 3 offres payantes : pleine largeur (pas de colonne vide)
+              ? 'mt-7 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-6'
+              : 'mt-7 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-6'
             : 'mt-7 grid grid-cols-1 md:grid-cols-2 gap-6'
         }
       >

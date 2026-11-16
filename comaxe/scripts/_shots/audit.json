@@ -5,12 +5,20 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/login",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
@@ -22,12 +30,20 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/login",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
@@ -39,12 +55,20 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/login",
     "scrollW": 1440,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
@@ -56,16 +80,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 0,
     "sideOnScreen": false,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 9209
   },
   {
     "page": "dashboard",
@@ -73,16 +105,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
-    "sideOnScreen": false,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "sideW": 350,
+    "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 9355
   },
   {
     "page": "dashboard",
@@ -90,16 +130,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 350,
     "sideOnScreen": true,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 9370
   },
   {
     "page": "dashboard-alt",
@@ -107,16 +155,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/dashboard",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": "Dashboard",
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 1944
   },
   {
     "page": "dashboard-alt",
@@ -124,16 +180,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/dashboard",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": "Dashboard",
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 1968
   },
   {
     "page": "dashboard-alt",
@@ -141,16 +205,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/dashboard",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": "Dashboard",
+      "h": 0
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1906
+    "textLen": 1988
   },
   {
     "page": "ventes",
@@ -158,16 +230,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/ventes",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": "Ventes",
+      "h": 62
+    },
+    "nTables": 2,
+    "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 953
+    "textLen": 1317
   },
   {
     "page": "ventes",
@@ -175,16 +255,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/ventes",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": "Ventes",
+      "h": 62
+    },
+    "nTables": 2,
+    "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 953
+    "textLen": 1317
   },
   {
     "page": "ventes",
@@ -192,16 +280,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
-    "scrollW": 1440,
-    "overflow": 0,
+    "loc": "/ventes",
+    "scrollW": 1434,
+    "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
-    "nTables": 1,
-    "nTablesWrapped": 1,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": "Ventes",
+      "h": 0
+    },
+    "nTables": 2,
+    "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 953
+    "textLen": 1338
   },
   {
     "page": "stock",
@@ -209,16 +305,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/stock",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": "Stock",
+      "h": 62
+    },
     "nTables": 2,
     "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 1685
+    "textLen": 1576
   },
   {
     "page": "stock",
@@ -226,16 +330,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/stock",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": "Stock",
+      "h": 62
+    },
     "nTables": 2,
     "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 1685
+    "textLen": 1576
   },
   {
     "page": "stock",
@@ -243,16 +355,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/stock",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": "Stock",
+      "h": 0
+    },
     "nTables": 2,
     "nTablesWrapped": 2,
     "clipped": [],
-    "textLen": 1685
+    "textLen": 1596
   },
   {
     "page": "clients",
@@ -260,16 +380,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/clients",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": null,
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 968
+    "textLen": 1027
   },
   {
     "page": "clients",
@@ -277,16 +405,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/clients",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": null,
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 968
+    "textLen": 1027
   },
   {
     "page": "clients",
@@ -294,16 +430,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/clients",
     "scrollW": 1440,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 968
+    "textLen": 1048
   },
   {
     "page": "depenses",
@@ -311,16 +455,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/depenses",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": "Dépenses",
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1132
+    "textLen": 943
   },
   {
     "page": "depenses",
@@ -328,16 +480,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/depenses",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": "Dépenses",
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1132
+    "textLen": 943
   },
   {
     "page": "depenses",
@@ -345,16 +505,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/depenses",
     "scrollW": 1440,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": "Dépenses",
+      "h": 0
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1132
+    "textLen": 964
   },
   {
     "page": "benefice",
@@ -362,16 +530,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/benefice",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": null,
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1968
+    "textLen": 1742
   },
   {
     "page": "benefice",
@@ -379,16 +555,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/benefice",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": null,
+      "h": 62
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1968
+    "textLen": 1742
   },
   {
     "page": "benefice",
@@ -396,16 +580,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/benefice",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 1,
     "nTablesWrapped": 1,
     "clipped": [],
-    "textLen": 1968
+    "textLen": 1763
   },
   {
     "page": "dettes",
@@ -413,16 +605,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/dettes",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": null,
+      "h": 62
+    },
     "nTables": 4,
     "nTablesWrapped": 4,
     "clipped": [],
-    "textLen": 1815
+    "textLen": 1874
   },
   {
     "page": "dettes",
@@ -430,16 +630,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/dettes",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": null,
+      "h": 62
+    },
     "nTables": 4,
     "nTablesWrapped": 4,
     "clipped": [],
-    "textLen": 1815
+    "textLen": 1874
   },
   {
     "page": "dettes",
@@ -447,16 +655,24 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/dettes",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 4,
     "nTablesWrapped": 4,
     "clipped": [],
-    "textLen": 1815
+    "textLen": 1895
   },
   {
     "page": "analytique",
@@ -464,16 +680,24 @@
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/tarifs",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1326
+    "textLen": 3709
   },
   {
     "page": "analytique",
@@ -481,16 +705,24 @@
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/tarifs",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1326
+    "textLen": 3709
   },
   {
     "page": "analytique",
@@ -498,168 +730,248 @@
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/tarifs",
+    "scrollW": 1434,
+    "overflow": -6,
+    "offenders": [],
+    "nOff": 0,
+    "sideW": 0,
+    "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
+    "clipped": [],
+    "textLen": 3709
+  },
+  {
+    "page": "rapports",
+    "path": "/rapports",
+    "vp": "mobile",
+    "w": 375,
+    "vw": 375,
+    "loc": "/rapports",
+    "scrollW": 375,
+    "overflow": 0,
+    "offenders": [],
+    "nOff": 0,
+    "sideW": 256,
+    "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 3,
+      "active": null,
+      "h": 62
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
+    "clipped": [],
+    "textLen": 2248
+  },
+  {
+    "page": "rapports",
+    "path": "/rapports",
+    "vp": "tablette",
+    "w": 768,
+    "vw": 768,
+    "loc": "/rapports",
+    "scrollW": 768,
+    "overflow": 0,
+    "offenders": [],
+    "nOff": 0,
+    "sideW": 256,
+    "sideOnScreen": false,
+    "nav": {
+      "present": true,
+      "onScreen": true,
+      "items": 4,
+      "active": null,
+      "h": 62
+    },
+    "nTables": 0,
+    "nTablesWrapped": 0,
+    "clipped": [],
+    "textLen": 2248
+  },
+  {
+    "page": "rapports",
+    "path": "/rapports",
+    "vp": "desktop",
+    "w": 1440,
+    "vw": 1440,
+    "loc": "/rapports",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1326
+    "textLen": 2269
   },
   {
-    "page": "rapports",
-    "path": "/rapports",
+    "page": "objectifs",
+    "path": "/objectifs",
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/tarifs",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1999
+    "textLen": 3708
   },
   {
-    "page": "rapports",
-    "path": "/rapports",
+    "page": "objectifs",
+    "path": "/objectifs",
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/tarifs",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
+    "sideW": 0,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1999
+    "textLen": 3708
   },
   {
-    "page": "rapports",
-    "path": "/rapports",
+    "page": "objectifs",
+    "path": "/objectifs",
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/tarifs",
     "scrollW": 1434,
     "overflow": -6,
     "offenders": [],
     "nOff": 0,
-    "sideW": 256,
-    "sideOnScreen": true,
+    "sideW": 0,
+    "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1999
+    "textLen": 3708
   },
   {
-    "page": "objectifs",
-    "path": "/objectifs",
+    "page": "parametres",
+    "path": "/parametres",
     "vp": "mobile",
     "w": 375,
     "vw": 375,
+    "loc": "/parametres",
     "scrollW": 375,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1050
+    "textLen": 933
   },
   {
-    "page": "objectifs",
-    "path": "/objectifs",
+    "page": "parametres",
+    "path": "/parametres",
     "vp": "tablette",
     "w": 768,
     "vw": 768,
+    "loc": "/parametres",
     "scrollW": 768,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": false,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1050
+    "textLen": 924
   },
   {
-    "page": "objectifs",
-    "path": "/objectifs",
+    "page": "parametres",
+    "path": "/parametres",
     "vp": "desktop",
     "w": 1440,
     "vw": 1440,
+    "loc": "/parametres",
     "scrollW": 1440,
     "overflow": 0,
     "offenders": [],
     "nOff": 0,
     "sideW": 256,
     "sideOnScreen": true,
+    "nav": {
+      "present": false,
+      "onScreen": false,
+      "items": 0,
+      "active": null,
+      "h": 0
+    },
     "nTables": 0,
     "nTablesWrapped": 0,
     "clipped": [],
-    "textLen": 1050
-  },
-  {
-    "page": "parametres",
-    "path": "/parametres",
-    "vp": "mobile",
-    "w": 375,
-    "vw": 375,
-    "scrollW": 375,
-    "overflow": 0,
-    "offenders": [],
-    "nOff": 0,
-    "sideW": 256,
-    "sideOnScreen": false,
-    "nTables": 0,
-    "nTablesWrapped": 0,
-    "clipped": [],
-    "textLen": 1126
-  },
-  {
-    "page": "parametres",
-    "path": "/parametres",
-    "vp": "tablette",
-    "w": 768,
-    "vw": 768,
-    "scrollW": 768,
-    "overflow": 0,
-    "offenders": [],
-    "nOff": 0,
-    "sideW": 256,
-    "sideOnScreen": false,
-    "nTables": 0,
-    "nTablesWrapped": 0,
-    "clipped": [],
-    "textLen": 1126
-  },
-  {
-    "page": "parametres",
-    "path": "/parametres",
-    "vp": "desktop",
-    "w": 1440,
-    "vw": 1440,
-    "scrollW": 1440,
-    "overflow": 0,
-    "offenders": [],
-    "nOff": 0,
-    "sideW": 256,
-    "sideOnScreen": true,
-    "nTables": 0,
-    "nTablesWrapped": 0,
-    "clipped": [],
-    "textLen": 1126
+    "textLen": 970
   }
 ]

@@ -11,7 +11,7 @@
 
 import type { FeatureKey, PlanId, ResourceKey } from './types';
 import { getPlan } from './plans.config';
-import { nextPlanId } from './entitlements';
+import { nextPlanId, type HistoryKey } from './entitlements';
 
 export interface LocalizedMessage {
   fr: string;
@@ -83,6 +83,36 @@ export function featureLockedMessage(
     en: next
       ? `The “${label.en}” feature is locked on your ${plan.name} plan. Upgrade to ${getPlan(next).name} to unlock it.`
       : `The “${label.en}” feature is locked on your ${plan.name} plan.`,
+  };
+}
+
+/**
+ * « Bénéfice : historique de 3 jours avec votre offre Essential.
+ *   Passez à Pro pour afficher cette date. »
+ *
+ * Affiché par le dashboard (cartes Bénéfice / Dépenses) quand la date
+ * active sort de la fenêtre d'historique du plan : aucun montant n'est
+ * rendu à côté — les totaux hors fenêtre ne sont jamais exposés.
+ */
+export function historyLockedMessage(planId: PlanId, key: HistoryKey): LocalizedMessage {
+  const plan = getPlan(planId);
+  const days = key === 'expense' ? plan.limits.expensesHistoryDays : plan.limits.profitsHistoryDays;
+  const label = key === 'expense' ? { fr: 'Dépenses', en: 'Expenses' } : { fr: 'Bénéfice', en: 'Profit' };
+  const next = nextPlanId(planId);
+  if (days == null) {
+    // Fenêtre illimitée : ce message ne devrait jamais être demandé.
+    return {
+      fr: `Historique des ${label.fr} illimité avec votre offre ${plan.name}.`,
+      en: `${label.en} history is unlimited on your ${plan.name} plan.`,
+    };
+  }
+  return {
+    fr: next
+      ? `${label.fr} : historique de ${days} jours avec votre offre ${plan.name}. Passez à ${getPlan(next).name} pour afficher cette date.`
+      : `${label.fr} : historique de ${days} jours avec votre offre ${plan.name}.`,
+    en: next
+      ? `${label.en}: ${days}-day history on your ${plan.name} plan. Upgrade to ${getPlan(next).name} to display this date.`
+      : `${label.en}: ${days}-day history on your ${plan.name} plan.`,
   };
 }
 

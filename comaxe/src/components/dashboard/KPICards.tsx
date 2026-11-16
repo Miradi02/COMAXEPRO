@@ -1,9 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ShoppingBag, TrendingUp, Receipt, PackageCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingBag, TrendingUp, Receipt, PackageCheck, Wallet, Lock, ArrowRight } from 'lucide-react';
 import { useCommerce } from '@/context/CommerceContext';
+import { useBilling } from '@/context/BillingContext';
 import { useI18n } from '@/context/I18nContext';
+import { isWithinHistory } from '@/lib/billing/entitlements';
+import { historyLockedMessage, type LocalizedMessage } from '@/lib/billing/messages';
 
 export function KPICards() {
   const {
@@ -19,10 +23,46 @@ export function KPICards() {
     selectedDate,
     formatAmount,
   } = useCommerce();
-  const { t } = useI18n();
+  const { planId } = useBilling();
+  const { t, locale } = useI18n();
 
-  const isFiltered = selectedDate && selectedDate !== 'today';
+  const isFiltered = Boolean(selectedDate && selectedDate !== 'today');
   const dateSuffix = isFiltered ? ` (${displayDateText})` : ' ' + t("Aujourd'hui", 'Today');
+
+  // ── Verrous d'historique (Bénéfice / Dépenses) ──
+  // Règle existante appliquée à la date AFFICHÉE : hors fenêtre du plan,
+  // la carte bascule sur un verrou (message centralisé + offre) sans
+  // AUCUN montant. `planId === null` (abonnement pas encore résolu) →
+  // aucun blocage prématuré. Aujourd'hui est toujours dans la fenêtre.
+  const activeDateEnd = isFiltered ? `${selectedDate}T23:59:59.999` : null;
+  const profitLocked =
+    planId !== null && activeDateEnd !== null && !isWithinHistory(planId, 'profit', activeDateEnd);
+  const expenseLocked =
+    planId !== null && activeDateEnd !== null && !isWithinHistory(planId, 'expense', activeDateEnd);
+
+  const lockMessage = (key: 'profit' | 'expense'): string => {
+    const m: LocalizedMessage = historyLockedMessage(planId ?? 'essential', key);
+    return locale === 'en' ? m.en : m.fr;
+  };
+
+  const LockAmount = ({ message }: { message: string }) => (
+    <div className="my-3 flex items-start gap-2">
+      <span className="p-1.5 rounded-lg bg-slate-100 text-slate-500 shrink-0">
+        <Lock className="w-4 h-4" />
+      </span>
+      <span className="text-xs font-semibold leading-snug text-slate-500">{message}</span>
+    </div>
+  );
+
+  const LockCta = () => (
+    <Link
+      href="/tarifs"
+      className="inline-flex items-center gap-1 text-xs font-bold text-[#1E5BF8] hover:text-[#1548CF] transition-colors"
+    >
+      {t('Voir les offres', 'See plans')}
+      <ArrowRight className="w-3.5 h-3.5" />
+    </Link>
+  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
@@ -53,7 +93,9 @@ export function KPICards() {
               <ShoppingBag className="w-4 h-4 text-white" />
             </div>
             <span className="text-sm font-semibold tracking-wide text-white/90">
-              {t('Ventes', 'Sales')}{dateSuffix}
+              {isFiltered
+                ? `${t('Ventes', 'Sales')} (${displayDateText})`
+                : t('Ventes du jour', "Today's sales")}
             </span>
           </div>
           <span className="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
@@ -88,15 +130,23 @@ export function KPICards() {
           </span>
         </div>
 
-        <div className="my-3 flex items-baseline gap-3">
-          <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            {formatAmount(todayProfitTotal)}
-          </span>
-        </div>
+        {profitLocked ? (
+          <LockAmount message={lockMessage('profit')} />
+        ) : (
+          <div className="my-3 flex items-baseline gap-3">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {formatAmount(todayProfitTotal)}
+            </span>
+          </div>
+        )}
 
-        <p className="text-xs text-slate-400">
-          {t("Après déduction du coût d'achat et des charges", 'After deducting purchase cost and expenses')}
-        </p>
+        {profitLocked ? (
+          <LockCta />
+        ) : (
+          <p className="text-xs text-slate-400">
+            {t("Après déduction du coût d'achat et des charges", 'After deducting purchase cost and expenses')}
+          </p>
+        )}
       </div>
 
       {/* Carte 3: DÉPENSES */}
@@ -115,15 +165,23 @@ export function KPICards() {
           </span>
         </div>
 
-        <div className="my-3 flex items-baseline gap-3">
-          <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            {formatAmount(todayExpensesTotal)}
-          </span>
-        </div>
+        {expenseLocked ? (
+          <LockAmount message={lockMessage('expense')} />
+        ) : (
+          <div className="my-3 flex items-baseline gap-3">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {formatAmount(todayExpensesTotal)}
+            </span>
+          </div>
+        )}
 
-        <p className="text-xs text-slate-400">
-          {t('Approvisionnement, transport & frais', 'Supplies, transport & fees')}
-        </p>
+        {expenseLocked ? (
+          <LockCta />
+        ) : (
+          <p className="text-xs text-slate-400">
+            {t('Approvisionnement, transport & frais', 'Supplies, transport & fees')}
+          </p>
+        )}
       </div>
 
       {/* Carte 4: VALEUR DU STOCK */}

@@ -203,11 +203,34 @@ const MEASURE = `(() => {
       if (r.right > vw + 1) clipped.push({ kind: 'input-deborde', w: Math.round(r.width), right: Math.round(r.right), ph: (el.placeholder || '').slice(0, 40) });
     }
 
+    // Barre de navigation inférieure (T1) : présence, items visibles, actif
+    const bn = document.querySelector('[data-bottom-nav]');
+    let nav;
+    if (bn) {
+      const r = bn.getBoundingClientRect();
+      const cs = getComputedStyle(bn);
+      const links = [].slice.call(bn.querySelectorAll('a')).filter((a) => {
+        const s = getComputedStyle(a);
+        return s.display !== 'none' && s.visibility !== 'hidden' && a.getBoundingClientRect().width > 0;
+      });
+      const act = bn.querySelector('[aria-current="page"]');
+      nav = {
+        present: cs.display !== 'none' && r.height > 0,
+        onScreen: r.top < window.innerHeight && r.bottom > 0,
+        items: links.length,
+        active: act ? (act.innerText || '').replace(/\\s+/g, ' ').trim() : null,
+        h: Math.round(r.height),
+      };
+    } else {
+      nav = { present: false, onScreen: false, items: 0, active: null, h: 0 };
+    }
+
     return JSON.stringify({
-      vw, scrollW: doc.scrollWidth, overflow,
+      vw, loc: location.pathname, scrollW: doc.scrollWidth, overflow,
       offenders: offenders.slice(0, 5), nOff: offenders.length,
       sideW: side ? Math.round(sideRect.width) : 0,
       sideOnScreen,
+      nav,
       nTables: tables.length, nTablesWrapped: wrappedTables.length,
       clipped,
       textLen: document.body.innerText.length,
@@ -432,6 +455,63 @@ async function main() {
     console.log('  BARRE LATÉRALE RÉELLEMENT VISIBLE EN MOBILE (devrait être masquée)');
     console.log('════════════════════════════════════════════════════════');
     sideIssues.forEach((r) => console.log(`  ▸ ${r.path} — sidebar sur l’écran, largeur ${r.sideW}px`));
+  }
+
+  // ── Barre de navigation inférieure (T1) ──
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  BARRE INFÉRIEURE — mobile : 3 items · tablette : 4 items · absente (Paramètres, desktop, pages hors app)');
+  console.log('════════════════════════════════════════════════════════\n');
+  // Routes internes enveloppées par AppShell (la barre n'existe que là).
+  // '/' = landing publique, /login et /tarifs = hors AppShell.
+  const APP_PATHS = ['/dashboard', '/ventes', '/stock', '/clients', '/depenses', '/benefice', '/dettes', '/analytique', '/rapports', '/objectifs'];
+  const MAIN_PATHS = ['/dashboard', '/ventes', '/stock', '/depenses'];
+  const navIssues = [];
+  const redirects = new Set();
+  for (const r of rows) {
+    if (r.err || !r.nav) continue;
+    const actual = r.loc || r.path;
+    if (actual !== r.path) redirects.add(`${r.path} → ${actual}`);
+    if (r.vp === 'desktop') {
+      // DESKTOP : priorité absolue — la moindre barre = régression
+      if (r.nav.present) navIssues.push(`${r.path} @ desktop — barre présente (desktop doit rester inchangé)`);
+      continue;
+    }
+    const inApp =
+      APP_PATHS.some((p) => actual === p || actual.startsWith(p + '/')) &&
+      !actual.startsWith('/parametres');
+    if (!inApp) {
+      // Hors navigation principale (landing, /tarifs après redirection,
+      // pages Paramètres…) : aucune barre acceptée
+      if (r.nav.present) navIssues.push(`${r.path} @ ${r.vp} — barre présente hors navigation principale (${actual})`);
+      continue;
+    }
+    if (!r.nav.present) { navIssues.push(`${r.path} @ ${r.vp} — barre ABSENTE (${actual})`); continue; }
+    const expected = r.vp === 'mobile' ? 3 : 4;
+    if (!r.nav.onScreen) navIssues.push(`${r.path} @ ${r.vp} — barre hors écran (${actual})`);
+    if (r.nav.items !== expected) navIssues.push(`${r.path} @ ${r.vp} — ${r.nav.items} items visibles, attendu ${expected} (${actual})`);
+    if (MAIN_PATHS.indexOf(actual) >= 0 && !r.nav.active) navIssues.push(`${r.path} @ ${r.vp} — aucun item actif mis en évidence (${actual})`);
+    if (r.nav.h < 40) navIssues.push(`${r.path} @ ${r.vp} — barre anormalement petite (${r.nav.h}px)`);
+  }
+  for (const [name] of ROUTES) {
+    const cells = VIEWPORTS.map(([vp]) => {
+      const r = rows.find((x) => x.page === name && x.vp === vp);
+      if (!r || r.err || !r.nav) return '—'.padEnd(26);
+      const actual = r.loc || r.path;
+      if (actual !== r.path) return ('→ ' + actual).padEnd(26);
+      if (!r.nav.present) return 'absente'.padEnd(26);
+      return (r.nav.items + ' it.' + (r.nav.active ? ' ● ' + r.nav.active : '')).padEnd(26);
+    }).join('');
+    console.log(`  ${name.padEnd(14)} ${cells}`);
+  }
+  if (redirects.size) {
+    console.log('\n  ℹ️  redirections détectées (compte audit Essential sans accès, etc.) :');
+    [...redirects].forEach((x) => console.log(`    → ${x}`));
+  }
+  if (navIssues.length) {
+    console.log('\n  ⚠️  ANOMALIES BARRE INFÉRIEURE :');
+    navIssues.forEach((i) => console.log(`    ▸ ${i}`));
+  } else {
+    console.log('\n  ✅ barre inférieure conforme sur toutes les mesures.\n');
   }
 
   const clipped = rows.filter((r) => (r.clipped && r.clipped.length > 0));

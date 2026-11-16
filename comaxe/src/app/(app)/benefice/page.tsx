@@ -173,7 +173,7 @@ export default function BeneficePage() {
           </div>
 
           <div className="relative z-10 my-3">
-            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            <span className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               {formatAmount(activeDateNetProfit)}
             </span>
           </div>
@@ -203,7 +203,7 @@ export default function BeneficePage() {
           </div>
 
           <div className="my-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {formatAmount(Math.round(totalNetProfit * 0.4) || 840)}
             </span>
           </div>
@@ -230,7 +230,7 @@ export default function BeneficePage() {
           </div>
 
           <div className="my-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {formatAmount(totalNetProfit)}
             </span>
           </div>
@@ -257,7 +257,7 @@ export default function BeneficePage() {
           </div>
 
           <div className="my-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {formatAmount(totalNetProfit > 0 ? totalNetProfit + 2450 : 2450)}
             </span>
           </div>

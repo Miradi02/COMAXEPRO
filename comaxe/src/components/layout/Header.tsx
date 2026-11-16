@@ -3,14 +3,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Menu,
-  Package,
   Plus,
-  User,
   Calendar as CalendarIcon,
   ChevronDown,
-  Receipt,
   Check,
   RotateCcw,
+  Settings,
+  ArrowLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -23,7 +22,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { openMobileMenu, headerAction } = useAppShell();
-  const { selectedDate, setSelectedDate, displayDateText, userProfile } = useCommerce();
+  const { selectedDate, setSelectedDate, displayDateText } = useCommerce();
   const { t, locale } = useI18n();
 
   // Presets dynamiques pour le sélecteur global : Aujourd'hui + 5 jours précédents réels
@@ -265,69 +264,88 @@ export function Header() {
     }
   };
 
+  // Retour depuis les pages Paramètres (mobile/tablette) vers l'application.
+  // Historique présent → retour natif ; sinon → tableau de bord.
+  const handleBackToApp = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
   const actionLabel = headerAction?.label || currentRouteMeta.actionLabel;
   const isCustomDateActive = selectedDate && selectedDate !== 'today';
 
+  // EN-TÊTE COMPACT mobile/tablette : UNE seule ligne de raccourcis
+  // (☰ ⚙️ à gauche · raccourcis + CTA à droite), tailles réduites sous lg,
+  // valeurs d'origine exactes à partir de lg (desktop strictement inchangé).
   return (
-    <header className="sticky top-0 z-30 bg-[#F8F9FD]/90 backdrop-blur-md px-4 sm:px-8 py-4 transition-all">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 bg-[#F8F9FD]/90 backdrop-blur-md px-4 sm:px-8 py-2.5 lg:py-4 transition-all">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 lg:gap-4">
         {/* Left Side: Mobile Menu */}
-        <div className="flex items-center gap-3 flex-1 max-w-md">
-          {/* Hamburger (Mobile only) */}
-          <button
-            onClick={openMobileMenu}
-            className="lg:hidden p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs"
-            aria-label={t('Ouvrir le menu', 'Open menu')}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        <div className="flex items-center gap-2 lg:gap-2.5 flex-1 max-w-md">
+          {isSettingsRoute ? (
+            /* Paramètres (mobile/tablette) = page dédiée : plus de hamburger
+               ni de raccourcis — retour clair vers l'application normale.
+               Desktop : rien (lg:hidden, sidebar desktop inchangée). */
+            <button
+              onClick={handleBackToApp}
+              className="lg:hidden flex items-center gap-1.5 p-2 pr-3 lg:p-2.5 lg:pr-3.5 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs transition-colors"
+              aria-label={t("Retour à l'application", 'Back to the app')}
+            >
+              <ArrowLeft className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-xs lg:text-sm font-bold">
+                {t('Retour', 'Back')}
+              </span>
+            </button>
+          ) : (
+            /* Hamburger (Mobile/Tablette only) — le ⚙️ est désormais à DROITE */
+            <button
+              onClick={openMobileMenu}
+              className="lg:hidden p-2 lg:p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs"
+              aria-label={t('Ouvrir le menu', 'Open menu')}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        {/* Right Side: Quick Tools & Main CTA */}
-        <div className="flex items-center justify-end gap-2.5 sm:gap-3 flex-wrap">
-          {/* Raccourcis masqués sur les pages de configuration */}
-          {!isSettingsRoute && (
-            <>
-              {/* Quick Action: Stock / Articles */}
-              <Link
-                href="/stock"
-                prefetch={true}
-                title={t('Consulter le stock et les alertes', 'View stock and alerts')}
-                className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-[#1E5BF8] hover:bg-blue-50/50 flex items-center justify-center shadow-xs transition-colors"
-              >
-                <Package className="w-4 h-4" />
-              </Link>
-
-              {/* Quick Action: Dépenses */}
-              <Link
-                href="/depenses"
-                prefetch={true}
-                title={t('Enregistrer une dépense', 'Record an expense')}
-                className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-[#1E5BF8] hover:bg-blue-50/50 flex items-center justify-center shadow-xs transition-colors"
-              >
-                <Receipt className="w-4 h-4" />
-              </Link>
-            </>
-          )}
-
+        {/* Right Side: Main CTA + Paramètres — sur la MÊME ligne que ☰ */}
+        <div className="flex items-center justify-end gap-2 lg:gap-3 flex-wrap">
           {/* Primary Action Button (absent du Dashboard : les ventes s'y consultent seulement) */}
           {actionLabel && (
             <button
               onClick={handlePrimaryAction}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 lg:gap-2 px-2.5 py-2 lg:px-4 lg:py-2.5 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-xs lg:text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>{actionLabel}</span>
+              <span className="whitespace-nowrap">{actionLabel}</span>
             </button>
+          )}
+
+          {/* Paramètres (TOUS formats) — en haut à droite, niveau de ☰.
+              Absent des pages Paramètres (retour ↵ gère la navigation). */}
+          {!isSettingsRoute && (
+            <Link
+              href="/parametres"
+              prefetch={true}
+              title={t('Paramètres', 'Settings')}
+              aria-label={t('Paramètres', 'Settings')}
+              className="p-2 lg:p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-[#1E5BF8] hover:bg-blue-50/50 shadow-xs transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
           )}
         </div>
       </div>
 
-      {/* Sub-header Controls Bar (Title + User + Global Date Filter) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-6">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+      {/* Sub-header Controls Bar (Title + Global Date Filter) — le calendrier
+          est calé à DROITE sur tous les formats, y compris le téléphone. */}
+      <div className="flex items-start sm:items-center justify-between gap-2 lg:gap-3 mt-3 lg:mt-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
               {currentRouteMeta.title}
             </h1>
             {isCustomDateActive && (
@@ -337,25 +355,19 @@ export function Header() {
               </span>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs lg:text-sm text-slate-500 mt-0.5">
             {currentRouteMeta.subtitle}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto relative">
-          {/* Utilisateur connecté */}
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/80 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs">
-            <User className="w-3.5 h-3.5 text-slate-400" />
-            <span>{`${userProfile.firstName} ${userProfile.lastName}`.trim()}</span>
-          </div>
-
+        <div className="flex items-center gap-2 lg:gap-2.5 shrink-0 relative">
           {/* GLOBAL Date Selector with Popover — absent des pages Paramètres */}
           {!isSettingsRoute && (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDateOpen(!isDateOpen)}
               aria-pressed={Boolean(isCustomDateActive)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold shadow-xs transition-all ${
+              className={`flex items-center gap-1.5 lg:gap-2 px-2.5 py-1.5 lg:px-3.5 lg:py-2 rounded-xl border text-xs lg:text-sm font-semibold shadow-xs transition-all ${
                 isCustomDateActive
                   ? 'bg-blue-50 text-[#1E5BF8] border-blue-300 ring-2 ring-blue-500/10'
                   : 'bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50'

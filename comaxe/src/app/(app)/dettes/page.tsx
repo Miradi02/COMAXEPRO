@@ -293,7 +293,7 @@ export default function DettesPage() {
                   {t('Dettes en Cours', 'Open Debts')}
                 </span>
               </div>
-              <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {activeDebtsCount}
               </p>
               <p className="text-xs text-slate-400 font-medium mt-1">
@@ -314,7 +314,7 @@ export default function DettesPage() {
                   {t('Reste à Récupérer', 'Left to Recover')}
                 </span>
               </div>
-              <p className="text-3xl font-extrabold text-rose-600 tracking-tight">
+              <p className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight">
                 {formatAmount(totalRemainingAmount)}
               </p>
               <p className="text-xs text-slate-400 font-medium mt-1">
@@ -331,7 +331,7 @@ export default function DettesPage() {
                   {t('Montant Recouvré', 'Amount Recovered')}
                 </span>
               </div>
-              <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">
+              <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">
                 {formatAmount(totalRecoveredAmount)}
               </p>
               <p className="text-xs text-slate-400 font-medium mt-1">
@@ -348,7 +348,7 @@ export default function DettesPage() {
                   {t('Taux de Recouvrement', 'Recovery Rate')}
                 </span>
               </div>
-              <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {recoveryRate} %
               </p>
               <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">

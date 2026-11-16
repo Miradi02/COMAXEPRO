@@ -558,7 +558,9 @@ export default function StockPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          {/* min-w : l'historique défile horizontalement au lieu de
+              comprimer 6 colonnes sur petit écran (T8 responsive) */}
+          <table className="w-full min-w-[680px] text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/60">
                 <th className="py-3 px-4 rounded-l-xl">{t('Date', 'Date')}</th>

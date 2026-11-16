@@ -14,7 +14,6 @@ import {
   TrendingUp,
   FileBarChart,
   Target,
-  Settings,
   CreditCard,
   X,
   Store,
@@ -44,8 +43,10 @@ export function Sidebar() {
     return pathname === path || pathname.startsWith(path + '/');
   };
 
-  const navItemClass = (isActive: boolean) =>
-    `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-colors ${
+  // `display` permet de masquer du tiroir hamburger (mobile/tablette) les items
+  // déjà présents dans la barre inférieure — la sidebar desktop (lg:) les garde.
+  const navItemClass = (isActive: boolean, display = 'flex') =>
+    `${display} items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-colors ${
       isActive
         ? 'bg-blue-50/90 text-[#1E5BF8] font-semibold'
         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
@@ -109,11 +110,11 @@ export function Sidebar() {
                 {t('Général', 'General')}
               </p>
               <div className="space-y-1">
-                {/* Dashboard */}
+                {/* Dashboard — doublon de la barre inférieure (masqué hors desktop) */}
                 <Link
                   href="/dashboard"
                   prefetch={true}
-                  className={navItemClass(isCurrentActive('/dashboard'))}
+                  className={navItemClass(isCurrentActive('/dashboard'), 'hidden lg:flex')}
                 >
                   <div className="flex items-center gap-3">
                     <LayoutDashboard className={iconClass(isCurrentActive('/dashboard'))} />
@@ -121,11 +122,11 @@ export function Sidebar() {
                   </div>
                 </Link>
 
-                {/* Ventes */}
+                {/* Ventes — doublon de la barre inférieure (masqué hors desktop) */}
                 <Link
                   href="/ventes"
                   prefetch={true}
-                  className={navItemClass(isCurrentActive('/ventes'))}
+                  className={navItemClass(isCurrentActive('/ventes'), 'hidden lg:flex')}
                 >
                   <div className="flex items-center gap-3">
                     <ShoppingBag className={iconClass(isCurrentActive('/ventes'))} />
@@ -138,11 +139,11 @@ export function Sidebar() {
                   )}
                 </Link>
 
-                {/* Produits & Stock */}
+                {/* Produits & Stock — doublon de la barre inférieure (masqué hors desktop) */}
                 <Link
                   href="/stock"
                   prefetch={true}
-                  className={navItemClass(isCurrentActive('/stock'))}
+                  className={navItemClass(isCurrentActive('/stock'), 'hidden lg:flex')}
                 >
                   <div className="flex items-center gap-3">
                     <Package className={iconClass(isCurrentActive('/stock'))} />
@@ -170,11 +171,12 @@ export function Sidebar() {
                   </div>
                 </Link>
 
-                {/* Dépenses */}
+                {/* Dépenses — doublon de la barre sur TABLETTE uniquement (>=768),
+                    reste visible sur téléphone (<768, absent de la barre) */}
                 <Link
                   href="/depenses"
                   prefetch={true}
-                  className={navItemClass(isCurrentActive('/depenses'))}
+                  className={navItemClass(isCurrentActive('/depenses'), 'flex md:hidden lg:flex')}
                 >
                   <div className="flex items-center gap-3">
                     <Receipt className={iconClass(isCurrentActive('/depenses'))} />
@@ -268,18 +270,6 @@ export function Sidebar() {
                   <div className="flex items-center gap-3">
                     <Target className={iconClass(isCurrentActive('/objectifs'))} />
                     <span>{t('Objectifs', 'Goals')}</span>
-                  </div>
-                </Link>
-
-                {/* Paramètres */}
-                <Link
-                  href="/parametres"
-                  prefetch={true}
-                  className={navItemClass(isCurrentActive('/parametres'))}
-                >
-                  <div className="flex items-center gap-3">
-                    <Settings className={iconClass(isCurrentActive('/parametres'))} />
-                    <span>{t('Paramètres', 'Settings')}</span>
                   </div>
                 </Link>
               </div>

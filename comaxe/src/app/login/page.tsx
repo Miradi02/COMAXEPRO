@@ -91,10 +91,13 @@ export default function LoginPage() {
     []
   );
 
-  // Si déjà connecté, rediriger vers la page Tarifs (choix de l'offre)
+  // Si déjà connecté : un nouveau compte (onboarding_completed === false)
+  // passe par le questionnaire /onboarding, sinon page Tarifs (choix de l'offre).
+  // Les comptes existants sans la clé ne déclenchent JAMAIS l'onboarding.
   useEffect(() => {
     if (user) {
-      router.replace('/tarifs');
+      const meta = user.user_metadata as Record<string, unknown> | null;
+      router.replace(meta?.onboarding_completed === false ? '/onboarding' : '/tarifs');
     }
   }, [user, router]);
 
@@ -155,7 +158,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, firstName, lastName, {
+        const { error, session: signupSession } = await signUp(email, password, firstName, lastName, {
           storeName: storeName.trim(),
           phone: storePhone.trim(),
           address: storeAddress.trim(),
@@ -164,18 +167,25 @@ export default function LoginPage() {
           country,
         });
         if (error) throw error;
-        // Parcours imposé : après la création réussie d'un compte → page Tarifs.
-        // L'invitation à confirmer l'email est réaffichée en bandeau sur /tarifs
-        // (paramètre ?created=1) pour ne pas perdre l'instruction.
+        // Parcours imposé : Inscription → Onboarding → Tarifs.
+        // Session immédiate (auto-confirm) → /onboarding directement.
+        // Confirmation email requise (pas de session) → bandeau ?created=1
+        // sur /tarifs, puis l'effet ci-dessus bascule vers /onboarding à la
+        // connexion suivante (flag `onboarding_completed === false`).
         setSuccess(t('Compte créé ! Vérifiez votre email pour confirmer votre inscription, puis connectez-vous.', 'Account created! Check your email to confirm your registration, then sign in.'));
-        router.replace('/tarifs?created=1');
+        router.replace(signupSession ? '/onboarding' : '/tarifs?created=1');
       } else {
-        const { error } = await signIn(email, password);
+        const { error, user: signedUser } = await signIn(email, password);
         if (error) throw error;
-        // Reprise du flux (?next=… ex. /tarifs?plan=pro) ou parcours par
-        // défaut : page Tarifs. replace (et non push) : évite de revenir
+        // Nouveau compte (flag à false) → questionnaire d'onboarding ;
+        // sinon reprise du flux (?next=… ex. /tarifs?plan=pro) ou parcours
+        // par défaut : page Tarifs. replace (et non push) : évite de revenir
         // sur /login avec le bouton retour.
-        router.replace(readSafeNextPath());
+        if (signedUser?.user_metadata?.onboarding_completed === false) {
+          router.replace('/onboarding');
+        } else {
+          router.replace(readSafeNextPath());
+        }
       }
     } catch (err: any) {
       const raw = String(err?.message || '');

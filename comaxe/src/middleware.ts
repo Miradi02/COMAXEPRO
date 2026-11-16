@@ -58,9 +58,10 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Routes publiques : landing (`/`), connexion (`/login`), tarifs (`/tarifs`).
+  // Routes publiques : landing (`/`), connexion (`/login`), tarifs (`/tarifs`)
+  // et le parcours d'onboarding (consultable avant le choix de l'offre).
   // Tout le reste de l'application reste protégé.
-  const publicPaths = ['/', '/login', '/tarifs'];
+  const publicPaths = ['/', '/login', '/tarifs', '/onboarding'];
   const isPublicRoute = publicPaths.includes(pathname);
 
   // Si pas de session et route protégée -> redirect /login
@@ -68,8 +69,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Si session et sur /login -> page Tarifs (choix de l'offre après connexion)
+  // Si session et sur /login -> onboarding (nouveau compte jamais onboardiné)
+  // sinon page Tarifs (choix de l'offre après connexion).
+  // Test : un compte existant SANS la clé `onboarding_completed` reste
+  // sur /tarifs — seules les valeurs explicitement `false` déclenchent
+  // le parcours (jamais l'absence de clé).
   if (session && pathname === '/login') {
+    const meta = session.user.user_metadata as Record<string, unknown> | null;
+    if (meta && meta.onboarding_completed === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url));
+    }
     return NextResponse.redirect(new URL('/tarifs', request.url));
   }
 

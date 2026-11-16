@@ -39,7 +39,7 @@ export function LandingHero() {
           </span>
 
           {/* Titre */}
-          <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
+          <h1 className="mt-5 text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
             {t('Tout votre commerce, ', 'Your whole business, ')}
             <span className="text-[#1E5BF8]">{t('au même endroit', 'in one place')}</span>
           </h1>
@@ -68,7 +68,7 @@ export function LandingHero() {
           {/* CTA */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="#tarifs"
+              href="/login"
               className="group inline-flex items-center gap-2.5 px-6 sm:px-7 py-3.5 rounded-full bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-sm font-bold shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 active:scale-95 transition-all"
             >
               {t('Commencer gratuitement', 'Start for free')}

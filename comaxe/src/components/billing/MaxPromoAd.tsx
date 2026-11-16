@@ -68,7 +68,9 @@ export function MaxPromoAd() {
   const max = getPlan('max');
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[calc(100vw-2rem)] max-w-[320px]">
+    // bottom-24 : survole la barre de navigation inférieure (mobile/tablette)
+    // lg:bottom-6 : position d'origine sur desktop, strictement inchangée
+    <div className="fixed bottom-24 right-4 sm:right-6 lg:bottom-6 z-40 w-[calc(100vw-2rem)] max-w-[320px]">
       <Link
         href="/tarifs?offres=payer"
         className="group relative block bg-white rounded-2xl border border-slate-200/80 shadow-lg p-4 pr-9 transition-all hover:shadow-xl hover:border-blue-300 hover:-translate-y-0.5"

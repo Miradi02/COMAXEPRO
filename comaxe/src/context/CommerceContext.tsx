@@ -130,7 +130,7 @@ interface CommerceContextType {
 
   // 6. Moteur de Calcul Financier par Période
   getPeriodMetrics: (
-    period: '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise'
+    period: 'jour' | '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise'
   ) => PeriodProfitData;
 
   // 7. Actions & Transactions Métier
@@ -880,7 +880,7 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
   // 7. MOTEUR DE CALCUL PAR PÉRIODE
   // ==========================================
   const getPeriodMetrics = (
-    period: '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise'
+    period: 'jour' | '7j' | '30j' | '3m' | '6m' | '12m' | 'semaine' | 'mois' | '3mois' | 'annee' | 'personnalise'
   ): PeriodProfitData => {
     const periodSalesRaw =
       period === 'personnalise' ? filteredSales : sales.filter((s) => isWithinPeriodRange(s.date, period));
@@ -986,6 +986,7 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
     });
 
     const labels: Record<string, string> = {
+      jour: t("Aujourd'hui", 'Today'),
       '7j': t('7 derniers jours', 'Last 7 days'),
       semaine: t('Cette semaine', 'This week'),
       '30j': t('30 derniers jours', 'Last 30 days'),
@@ -1053,9 +1054,36 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
     // (même ordre que `process_sale` côté serveur : vente → customer).
     const blockedSale = guardResource('sale');
     if (blockedSale) return { success: false, error: blockedSale };
-    if (!saleData.customerId && saleData.client.name?.trim()) {
+
+    // T7 — anti-doublon : réutiliser la fiche client existante.
+    // Reconnaissance par coordonnées déjà utilisées (téléphone normalisé),
+    // sinon par nom exact (insensible casse/espaces). Jamais de fusion de
+    // personnes distinctes : on attache la vente à UNE fiche uniquement si
+    // elle est unique, sinon on laisse le serveur créer une nouvelle fiche.
+    const digits = (v?: string) => (v ?? '').replace(/\D/g, '');
+    const normName = (v?: string) => (v ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    let resolvedCustomerId: string | null = saleData.customerId ?? null;
+    if (!resolvedCustomerId) {
+      // Priorité au nom : même nom → même fiche, même avec un numéro
+      // différent. Sinon coordonnées déjà utilisées (téléphone) si unique.
+      const nameKey = normName(saleData.client.name);
+      if (nameKey) {
+        const byName = customers.filter((c) => normName(c.name) === nameKey);
+        if (byName.length === 1) resolvedCustomerId = byName[0].id;
+      }
+      if (!resolvedCustomerId) {
+        const phoneKey = digits(saleData.client.phone);
+        if (phoneKey.length >= 6) {
+          const byPhone = customers.filter((c) => digits(c.phone) === phoneKey);
+          if (byPhone.length === 1) resolvedCustomerId = byPhone[0].id;
+        }
+      }
+    }
+    // Nouvelle fiche seulement si rien n'est réutilisable (le serveur
+    // réutilise aussi par nom) → le verrou client s'applique dans ce cas.
+    if (!resolvedCustomerId && saleData.client.name?.trim()) {
       const nameExists = customers.some(
-        (c) => c.name.trim().toLowerCase() === saleData.client.name.trim().toLowerCase()
+        (c) => normName(c.name) === normName(saleData.client.name)
       );
       if (!nameExists) {
         const blockedCustomer = guardResource('customer');
@@ -1116,7 +1144,7 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.rpc('process_sale', {
       p_code: code,
       p_date: saleData.date,
-      p_customer_id: saleData.customerId ?? null,
+      p_customer_id: resolvedCustomerId,
       p_client_name: saleData.client.name,
       p_client_phone: saleData.client.phone ?? null,
       p_client_avatar: saleData.client.avatar ?? null,
@@ -1135,6 +1163,12 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       return { success: false, error: t(`Erreur d'enregistrement : {e}`, 'Save error: {e}', { e: error.message }) };
+    }
+
+    // T7 — rattacher la vente à la fiche servie côté serveur (créée ou
+    // retrouvée par nom) quand aucune fiche n'avait été résolue côté client.
+    if (!resolvedCustomerId && data?.sale_id && data?.customer_id) {
+      await supabase.from('sales').update({ customer_id: data.customer_id }).eq('id', data.sale_id);
     }
 
     const newSale: Sale = {

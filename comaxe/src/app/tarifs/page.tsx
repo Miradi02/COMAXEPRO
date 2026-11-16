@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, ArrowLeft, Mail, X, Sparkles, Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Mail, X, Sparkles, Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { useI18n } from '@/context/I18nContext';
 import { useAuth } from '@/context/AuthContext';
@@ -28,14 +28,19 @@ import { PricingPlans, PricingNote } from '@/components/marketing/PricingPlans';
    ───────────────────────────────────────────────────────────── */
 /* ─────────────────────────────────────────────────────────────
    Grille tarifaire selon l'arrivée :
-   • /tarifs (défaut — visiteur, après inscription ou connexion) :
-     les 4 offres, Essential compris ;
-   • /tarifs?offres=payer (boutons « S'abonner » / « Changer de plan »
-     et pub Max) : grille SANS l'offre gratuite.
+   • visiteur / nouveau compte (après onboarding) : les 4 offres
+     du commerce, Essential compris ;
+   • connecté qui gère son abonnement (?offres=payer, offre payante
+     active) : les 3 offres payantes seulement.
    ───────────────────────────────────────────────────────────── */
 function PricingGrid() {
   const searchParams = useSearchParams();
-  const paidOnly = searchParams.get('offres') === 'payer';
+  const { user } = useAuth();
+  const { planId, loading } = useBilling();
+  const requestedPaid = searchParams.get('offres') === 'payer';
+  // Essential réservée aux visiteurs et aux comptes sans offre payante.
+  const hasPaidPlan = !loading && !!user && !!planId && planId !== 'essential';
+  const paidOnly = requestedPaid || hasPaidPlan;
   return <PricingPlans ctaHref="/dashboard" paidOnly={paidOnly} />;
 }
 
@@ -100,13 +105,14 @@ export default function TarifsPage() {
         className="pointer-events-none absolute top-64 -right-40 w-[420px] h-[420px] rounded-full bg-violet-500/10 blur-3xl"
       />
 
-      {/* ── Barre supérieure ── */}
+      {/* ── Barre supérieure — SEULE SORTIE : la croix (→ tableau de bord) ── */}
       <header className="sticky top-0 z-30 bg-[#F8F9FD]/90 backdrop-blur-md border-b border-slate-200/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <BrandLogo size={34} className="group-hover:scale-105 transition-transform" />
+          {/* Logo : présentation uniquement (non cliquable) */}
+          <span className="flex items-center gap-2.5">
+            <BrandLogo size={34} />
             <span className="text-lg font-extrabold tracking-tight text-slate-900">comaxe</span>
-          </Link>
+          </span>
 
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Croix « fermer » : retour direct au tableau de bord */}
@@ -119,22 +125,7 @@ export default function TarifsPage() {
             >
               <X className="w-4 h-4" />
             </button>
-            <Link
-              href="/"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 px-3 py-2 rounded-xl transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {t('Accueil', 'Home')}
-            </Link>
-            {user ? (
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
-              >
-                {t('Ouvrir l’application', 'Open the app')}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
+            {!user && (
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E5BF8] hover:bg-[#1548CF] text-white text-sm font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all"
@@ -279,12 +270,7 @@ export default function TarifsPage() {
             <span className="text-sm font-extrabold text-slate-900">comaxe</span>
           </div>
           <p className="text-xs text-slate-400">© 2026 COMAXE — {t('Tous droits réservés', 'All rights reserved')}</p>
-          <Link
-            href="/"
-            className="text-xs font-semibold text-slate-500 hover:text-[#1E5BF8] transition-colors"
-          >
-            {t('Retour à l’accueil', 'Back to home')}
-          </Link>
+          {/* Pas de lien « Retour à l'accueil » : la croix en haut est la seule sortie */}
         </div>
       </footer>
     </div>

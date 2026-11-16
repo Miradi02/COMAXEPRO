@@ -9,14 +9,14 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; user?: User | null }>;
   signUp: (
     email: string,
     password: string,
     firstName: string,
     lastName: string,
     storeInfo: StoreSignupInfo
-  ) => Promise<{ error: any }>;
+  ) => Promise<{ error: any; session?: Session | null }>;
   resendConfirmation: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -62,8 +62,10 @@ export function AuthProvider({
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // `user` renvoyé pour que la page login choisisse la destination
+    // (/onboarding pour un nouveau compte) sans état périmé.
+    return { error, user: data.user };
   };
 
   const signUp = async (
@@ -76,7 +78,7 @@ export function AuthProvider({
     // Les informations du commerce sont transmises comme métadonnées protégées :
     // le trigger serveur "handle_new_user" les enregistre dans store_profiles
     // (table sécurisée RLS) au moment exact de la création du compte.
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -84,6 +86,10 @@ export function AuthProvider({
         // laisse passer le paramètre ?code que le client échange en session.
         emailRedirectTo: `${window.location.origin}/login`,
         data: {
+          // Onboarding : les NOUVEAUX comptes ont `onboarding_completed: false`
+          // → redirection vers /onboarding après inscription. Les comptes
+          // existants (sans cette clé) ne déclenchent JAMAIS l'onboarding.
+          onboarding_completed: false,
           first_name: firstName,
           last_name: lastName,
           store_name: storeInfo.storeName,
@@ -95,7 +101,9 @@ export function AuthProvider({
         },
       },
     });
-    return { error };
+    // `session` est fournie si la confirmation email est inutile (auto-confirm) :
+    // la page login s'en sert pour choisir la destination (/onboarding ou /login).
+    return { error, session: data.session };
   };
 
   // Renvoi de l'email de confirmation (si l'utilisateur ne l'a pas reçu)
